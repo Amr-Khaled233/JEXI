@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { SESSION_COOKIES, SESSION_MAX_AGE, signSession, verifySession, verifySessionClaims, type SessionKind } from "@/lib/session";
+import { SESSION_COOKIES, SESSION_MAX_AGE, signSession, verifySessionClaims, type SessionKind } from "@/lib/session";
 
 export async function hashPassword(password: string) {
   return bcrypt.hash(password, 12);
@@ -10,6 +10,16 @@ export async function hashPassword(password: string) {
 
 export async function verifyPassword(password: string, hash: string) {
   return bcrypt.compare(password, hash);
+}
+
+// A real bcrypt hash of a random value, so a login for an unknown email takes as
+// long as one for a real account (response timing can't reveal which emails exist).
+const DUMMY_HASH = "$2b$12$N.sbA7TWVa19YhWzUdC8N.NUOE9fLodLc70x3wItoRiU1wiVcqirG";
+
+/** Checks the password; runs a full bcrypt comparison even when there's no account. */
+export async function checkLogin(password: string, hash: string | null | undefined) {
+  const ok = await bcrypt.compare(password, hash ?? DUMMY_HASH);
+  return ok && !!hash;
 }
 
 export async function startSession(kind: SessionKind, userId: string, version = 0) {
@@ -25,11 +35,6 @@ export async function startSession(kind: SessionKind, userId: string, version = 
 
 export async function endSession(kind: SessionKind) {
   (await cookies()).delete(SESSION_COOKIES[kind]);
-}
-
-async function sessionUserId(kind: SessionKind) {
-  const token = (await cookies()).get(SESSION_COOKIES[kind])?.value;
-  return verifySession(token, kind);
 }
 
 // ─── Admin ────────────────────────────────────────────────
@@ -61,23 +66,4 @@ export async function requireOwner(): Promise<AdminSession> {
   const admin = await requireAdmin();
   if (admin.role !== "OWNER") throw new Error("Only the store owner can do this.");
   return admin;
-}
-
-// ─── Customer ─────────────────────────────────────────────
-
-export async function getCustomer() {
-  const id = await sessionUserId("customer");
-  if (!id) return null;
-  return db.customer.findUnique({
-    where: { id },
-    select: { id: true, name: true, email: true, phone: true },
-  });
-}
-
-export type CustomerSession = NonNullable<Awaited<ReturnType<typeof getCustomer>>>;
-
-export async function requireCustomer(): Promise<CustomerSession> {
-  const customer = await getCustomer();
-  if (!customer) redirect("/account/login");
-  return customer;
 }

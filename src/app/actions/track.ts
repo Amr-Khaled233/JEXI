@@ -1,26 +1,49 @@
 "use server";
 
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
-import { rateLimit } from "@/lib/rate-limit";
-import { normalizePhone } from "@/lib/utils";
+import { isEmailConfigured, sendMail } from "@/lib/email/mailer";
+import { brandFromSettings } from "@/lib/email/notifications";
+import { customerOrdersEmail } from "@/lib/email/templates";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { getSettings } from "@/lib/settings";
 
-export type TrackState = { error?: string } | undefined;
+export type TrackState = { error?: string; sentTo?: string } | undefined;
 
+/**
+ * Track Order by email only. The order list is emailed to that address rather than
+ * shown on screen, so nobody can look up someone else's orders (address, phone)
+ * just by knowing their email. The response is identical whether or not orders exist.
+ */
 export async function trackOrderAction(_prev: TrackState, formData: FormData): Promise<TrackState> {
-  const orderNumber = String(formData.get("orderNumber") ?? "").trim().toUpperCase();
-  const contact = String(formData.get("contact") ?? "").trim();
-  if (!orderNumber || !contact) return { error: "Please enter your order number and the email or phone used at checkout." };
+  const parsed = z.email().max(200).safeParse(String(formData.get("email") ?? "").trim().toLowerCase());
+  if (!parsed.success) return { error: "Please enter a valid email address." };
+  const email = parsed.data;
 
-  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
-  if (!rateLimit(`track:${ip}`, 10)) return { error: "Too many attempts. Please wait a minute and try again." };
+  const allowed = (await rateLimit(`track:ip:${await clientIp()}`, 8, 10 * 60_000)) && (await rateLimit(`track:email:${email}`, 3, 15 * 60_000));
+  if (!allowed) return { error: "Too many requests. Please try again in a few minutes." };
 
-  const order = await db.order.findUnique({ where: { orderNumber }, select: { orderNumber: true, accessToken: true, email: true, phone: true } });
-  const matches =
-    order && (contact.includes("@") ? order.email === contact.toLowerCase() : normalizePhone(order.phone) === normalizePhone(contact));
+  if (!isEmailConfigured()) {
+    return { error: "Order tracking by email is temporarily unavailable. Please contact us on WhatsApp or Instagram." };
+  }
 
-  if (!order || !matches) return { error: "We couldn't find an order with those details. Please check and try again." };
+  const orders = await db.order.findMany({
+    where: { email },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+    select: { orderNumber: true, accessToken: true, status: true, total: true, createdAt: true, _count: { select: { items: true } } },
+  });
 
-  redirect(`/order/${encodeURIComponent(order.orderNumber)}?t=${order.accessToken}`);
+  if (orders.length > 0) {
+    const brand = brandFromSettings(await getSettings());
+    const message = customerOrdersEmail(
+      orders.map((o) => ({ ...o, itemCount: o._count.items })),
+      brand,
+    );
+    // Sent after the response so timing doesn't reveal whether this email has orders.
+    after(() => sendMail({ to: email, ...message }));
+  }
+
+  return { sentTo: email };
 }

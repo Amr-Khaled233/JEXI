@@ -36,5 +36,5 @@ export async function updateOrderStatusAction(_prev: StatusState, formData: Form
 
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath("/admin/orders");
-  return { success: notify ? "Status updated — the customer is being emailed." : "Status updated." };
+  return { success: notify ? "Status updated. The customer is being emailed." : "Status updated." };
 }

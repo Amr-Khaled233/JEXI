@@ -7,12 +7,12 @@ import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { requireAdmin } from "@/lib/auth";
 
-export const metadata: Metadata = { title: { default: "Dashboard", template: "%s · JEXI Admin" }, robots: { index: false } };
+export const metadata: Metadata = { title: { default: "Dashboard", template: "%s | JEXI Admin" }, robots: { index: false } };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await requireAdmin();
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[15rem_1fr]">
+    <div className="min-h-dvh lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
       <aside className="border-b border-border bg-surface lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:border-r lg:border-b-0">
         <div className="flex items-center justify-between px-4 py-4 lg:justify-center lg:py-7">
           <Link href="/admin" aria-label="Dashboard home">

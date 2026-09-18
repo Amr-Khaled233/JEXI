@@ -39,7 +39,7 @@ export default async function GiftBoxesAdminPage() {
                 <tr key={b.id}>
                   <td>
                     <Link href={`/admin/gift-boxes/${b.id}`} className="flex items-center gap-3 hover:text-gold">
-                      <span className="relative aspect-[4/5] w-10 shrink-0 overflow-hidden rounded-[2px] bg-surface-2">
+                      <span className="relative aspect-4/5 w-10 shrink-0 overflow-hidden rounded-[2px] bg-surface-2">
                         <Image src={b.coverImage} alt="" fill sizes="40px" className="object-cover" />
                       </span>
                       <span>

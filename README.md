@@ -2,7 +2,7 @@
 
 E-commerce storefront and admin dashboard for **JEXI Accessories**, a jewelry brand. Built with Next.js 16 (App Router, TypeScript), Tailwind CSS 4, Prisma 7 and PostgreSQL.
 
-- **Storefront:** home, category pages with filters and sorting, product pages, Gift Boxes, cart with promo codes, checkout (Cash on Delivery), order confirmation, order tracking, and optional customer accounts.
+- **Storefront:** home, category pages with filters and sorting, product pages, Gift Boxes, cart with promo codes, checkout (Cash on Delivery), order confirmation, and order tracking by email (no customer accounts or passwords).
 - **Admin (`/admin`):** overview stats, orders (the customer is emailed whenever a status changes), products, gift boxes, categories, promo codes, shipping zones for all 27 governorates, and settings.
 - **Email:** Gmail SMTP through Nodemailer. The store gets an email for each new order; the customer gets a confirmation and a status-update email.
 - **Themes:** dark (black and gold) and light (ivory and bronze). The visitor's choice is remembered.
@@ -54,7 +54,7 @@ Running the seed again is safe. It never overwrites data that already exists.
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `DATABASE_URL` | ✅ | Postgres connection string |
-| `SESSION_SECRET` | ✅ | Signs the admin and customer login cookies. Must be at least 32 random characters. Generate one with `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` |
+| `SESSION_SECRET` | ✅ | Signs the admin login cookies. Must be at least 32 random characters. Generate one with `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` |
 | `APP_URL` | ✅ in production | The site's public URL, used for links inside emails, e.g. `https://jexi.store` |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_NAME` | seed only | The first admin account |
 | `GMAIL_USER` | for email | The Gmail address emails are sent from |
@@ -123,13 +123,32 @@ Governorates switched off in **Shipping Zones** don't appear at checkout.
 ### Payments
 Cash on Delivery is the only method for now. `src/lib/payments/index.ts` defines a `PaymentProvider` interface, and the comments at the top of that file explain how to add a card gateway such as Paymob, Fawry or Stripe.
 
-### Accounts and security
-- Admins and customers each have their own login cookie. It's a signed JWT (HS256, using `jose`) stored in an httpOnly cookie. Passwords are hashed with bcrypt.
+### Customers and order tracking
+Customers don't need an account or password. Every order has a private link, which is shown after checkout and included in every email. On **Track Order** (`/track`), the customer only enters their email. We then **email** them a list of their recent orders, each with its private link.
+
+The orders are emailed rather than shown on screen on purpose. Otherwise anyone who typed a customer's email would see that customer's address and phone number. The page gives the same response whether or not that email has orders, so it also can't be used to find out who has ordered.
+
+### Admin accounts
+- Admin sessions use a signed JWT (HS256, using `jose`) in an httpOnly, SameSite cookie that lasts 12 hours. Passwords are hashed with bcrypt.
 - `src/proxy.ts` sends signed-out visitors to the login page. Every admin page and server action also checks the session itself (`requireAdmin()`).
-- Admins have one of two roles: **Owner** (can add or remove admins) or **Staff**.
-- **Forgot password (admin):** the "Forgot password?" link on `/admin/login` emails a reset link to the **store's notification inbox**, not to the admin's own address. That inbox is the "New-order notification email" in Admin → Settings, falling back to `ADMIN_NOTIFICATION_EMAIL`, then `GMAIL_USER`. The link works once and expires after 30 minutes. Resetting or changing a password signs that admin out on every other device. This only works once Gmail is set up (section 3).
-- An order page can only be opened in two ways: with the secret link sent at checkout and in emails, or through **Track Order** (order number plus the email or phone used). Registered customers also see their orders under **My account**.
-- Login and order tracking are rate-limited in memory, per server instance.
+- Admins have one of two roles: **Owner** or **Staff**. Only the Owner can add or remove admins or change the notification email.
+- **Forgot password:** the "Forgot password?" link on `/admin/login` emails a reset link to the **store's notification inbox**, not to the admin's own address. That inbox is the "New-order notification email" in Admin → Settings, falling back to `ADMIN_NOTIFICATION_EMAIL`, then `GMAIL_USER`. The link works once and expires after 30 minutes. Resetting or changing a password signs that admin out on every other device. This only works once Gmail is set up (section 3).
+
+### Security measures
+- **Prices and discounts** are always recalculated on the server. Prices sent from the browser are ignored.
+- **Rate limits** are stored in Postgres, so they hold across all Vercel instances:
+  - admin login: per IP and per account
+  - password-reset requests
+  - Track Order
+  - checkout: 5 orders per 10 minutes per visitor, which stops fake Cash on Delivery orders from locking up stock
+  - promo-code attempts
+- **Logins** take the same time whether or not the email exists, so response timing can't reveal which emails are registered.
+- **Security headers:** clickjacking protection (`X-Frame-Options`, CSP `frame-ancestors`), HSTS, `nosniff` and `Referrer-Policy`. The `X-Powered-By` header is removed.
+- **Uploads:** only admins can upload. Local uploads are checked against the file's real contents, not just the declared type. Vercel Blob only accepts image types up to 8 MB. Image URLs are validated.
+- **CSRF:** Next.js server actions reject requests from other sites, and the session cookie is SameSite.
+- **Session secret:** the app refuses to start with the example `SESSION_SECRET` from `.env.example`.
+
+Remember to run `npx prisma generate` after pulling schema changes. `npm install` does this for you through the `postinstall` script.
 
 ### Images
 - **On Vercel (with a Blob store connected):** the admin's browser uploads images straight to **Vercel Blob**. Our server only hands out a short-lived upload token, and only to a signed-in admin (`src/app/api/admin/upload/blob/route.ts`). Uploading directly avoids Vercel's 4.5 MB request limit. Images can be up to 8 MB.
@@ -182,7 +201,7 @@ prisma/
 src/
   app/(store)/           storefront pages
   app/admin/             admin login, dashboard pages and server actions
-  app/actions/           storefront server actions (cart quote, checkout, account, track)
+  app/actions/           storefront server actions (cart quote, checkout, track)
   app/uploads/           serves uploaded images
   components/            UI (store/, admin/, ui/)
   lib/
@@ -192,5 +211,5 @@ src/
     email/               Nodemailer transport, HTML templates, notification triggers
     payments/            payment provider registry
     auth.ts session.ts   admin and customer sessions
-  proxy.ts               redirects signed-out visitors away from /admin and /account
+  proxy.ts               redirects signed-out visitors away from /admin
 ```

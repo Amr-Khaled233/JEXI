@@ -76,7 +76,7 @@ export function PromoForm({
   };
 
   return (
-    <form onSubmit={submit} className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
+    <form onSubmit={submit} className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
       <div className="space-y-6">
         {error && <Alert tone="error">{error}</Alert>}
         <Panel title="Code">

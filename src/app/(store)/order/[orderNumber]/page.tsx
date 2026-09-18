@@ -7,7 +7,6 @@ import { OrderAddress, OrderItems, OrderSummaryTotals } from "@/components/order
 import { OrderTimeline } from "@/components/order-timeline";
 import { buttonClasses } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getCustomer } from "@/lib/auth";
 import { ORDER_STATUSES } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { formatDate } from "@/lib/utils";
@@ -34,10 +33,8 @@ export default async function OrderPage({ params, searchParams }: Props) {
   });
   if (!order) notFound();
 
-  // Visible with the secret link (from checkout/email/track) or to the signed-in owner.
-  const customer = await getCustomer();
-  const allowed = tokenMatches(t, order.accessToken) || (customer && (order.customerId === customer.id || order.email === customer.email));
-  if (!allowed) notFound();
+  // Only visible with the order's secret link (shown after checkout and sent by email).
+  if (!tokenMatches(t, order.accessToken)) notFound();
 
   return (
     <div className="container-page max-w-5xl py-10 md:py-14">
@@ -56,7 +53,7 @@ export default async function OrderPage({ params, searchParams }: Props) {
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-surface-2/50 px-6 py-5">
           <div>
             <p className="text-xs tracking-[0.18em] text-muted uppercase">Order number</p>
-            <p className="font-serif text-2xl tracking-wide">{order.orderNumber}</p>
+            <p className="font-sans text-xl font-medium tracking-wide tabular-nums sm:text-2xl">{order.orderNumber}</p>
           </div>
           <div className="text-right">
             <Badge tone={order.status === "CANCELLED" ? "danger" : order.status === "DELIVERED" ? "success" : "gold"}>{ORDER_STATUSES[order.status].label}</Badge>
@@ -68,7 +65,7 @@ export default async function OrderPage({ params, searchParams }: Props) {
           <OrderTimeline status={order.status} history={order.history} />
         </div>
 
-        <div className="grid grid-cols-1 gap-8 px-6 py-6 md:grid-cols-[1fr_18rem]">
+        <div className="grid grid-cols-1 gap-8 px-6 py-6 md:grid-cols-[minmax(0,1fr)_18rem]">
           <div>
             <OrderItems items={order.items} />
             <div className="mt-4 border-t border-border pt-4">

@@ -61,7 +61,7 @@ export function ProductForm({ initial, categories }: { initial: ProductFormValue
   };
 
   return (
-    <form onSubmit={submit} className="grid grid-cols-1 gap-6 lg:grid-cols-[1.6fr_1fr]">
+    <form onSubmit={submit} className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
       <div className="space-y-6">
         {error && <Alert tone="error">{error}</Alert>}
         <Panel title="Details">
@@ -106,7 +106,7 @@ export function ProductForm({ initial, categories }: { initial: ProductFormValue
             {COLOR_KEYS.map((color) => {
               const variant = v.variants[color];
               return (
-                <div key={color} className="grid items-center gap-3 rounded-[3px] border border-border p-3 sm:grid-cols-[12rem_1fr_1fr]">
+                <div key={color} className="grid items-center gap-3 rounded-[3px] border border-border p-3 sm:grid-cols-[12rem_minmax(0,1fr)_minmax(0,1fr)]">
                   <Checkbox
                     checked={!!variant}
                     onChange={() => {

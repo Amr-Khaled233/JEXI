@@ -43,7 +43,7 @@ export default async function OverviewPage() {
 
       {!isEmailConfigured() && (
         <Alert tone="info" className="mb-6">
-          Email notifications are off — set <code>GMAIL_USER</code> and <code>GMAIL_APP_PASSWORD</code> in your environment to send order emails.
+          Email notifications are off. Set <code>GMAIL_USER</code> and <code>GMAIL_APP_PASSWORD</code> in your environment to send order emails.
         </Alert>
       )}
 
@@ -52,7 +52,7 @@ export default async function OverviewPage() {
           const body = (
             <>
               <p className="text-[0.65rem] tracking-[0.18em] text-muted uppercase">{s.label}</p>
-              <p className="mt-2 font-serif text-3xl tabular-nums">{s.value}</p>
+              <p className="mt-2 font-sans text-2xl font-medium tabular-nums sm:text-3xl">{s.value}</p>
               <p className="mt-1 text-xs text-muted">{s.hint}</p>
             </>
           );
@@ -68,7 +68,7 @@ export default async function OverviewPage() {
         })}
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.6fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-xl">Recent orders</h2>
@@ -79,11 +79,11 @@ export default async function OverviewPage() {
           {recent.length === 0 ? (
             <EmptyState>No orders yet. They&apos;ll show up here as soon as customers check out.</EmptyState>
           ) : (
-            <Table>
+            <Table compact>
               <thead>
                 <tr>
                   <th>Order</th>
-                  <th>Customer</th>
+                  <th className="hidden sm:table-cell">Customer</th>
                   <th>Status</th>
                   <th className="text-right">Total</th>
                 </tr>
@@ -97,7 +97,7 @@ export default async function OverviewPage() {
                       </Link>
                       <span className="block text-xs text-muted">{formatDate(o.createdAt, true)}</span>
                     </td>
-                    <td>{o.customerName}</td>
+                    <td className="hidden sm:table-cell">{o.customerName}</td>
                     <td>
                       <OrderStatusBadge status={o.status} />
                     </td>

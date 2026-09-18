@@ -69,7 +69,7 @@ export function GiftBoxForm({ initial, products }: { initial: GiftBoxFormValues;
   };
 
   return (
-    <form onSubmit={submit} className="grid grid-cols-1 gap-6 lg:grid-cols-[1.6fr_1fr]">
+    <form onSubmit={submit} className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
       <div className="space-y-6">
         {error && <Alert tone="error">{error}</Alert>}
         <Panel title="Details">
@@ -114,7 +114,7 @@ export function GiftBoxForm({ initial, products }: { initial: GiftBoxFormValues;
             {v.items.map((it, i) => {
               const product = byId.get(it.productId);
               return (
-                <div key={i} className="grid gap-2 rounded-[3px] border border-border p-3 sm:grid-cols-[1fr_11rem_5rem_auto]">
+                <div key={i} className="grid gap-2 rounded-[3px] border border-border p-3 sm:grid-cols-[minmax(0,1fr)_11rem_5rem_auto]">
                   <Select
                     aria-label="Product"
                     value={it.productId}
@@ -129,7 +129,7 @@ export function GiftBoxForm({ initial, products }: { initial: GiftBoxFormValues;
                     </option>
                     {products.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.name} — {formatMoney(p.price)}
+                        {p.name}, {formatMoney(p.price)}
                       </option>
                     ))}
                   </Select>

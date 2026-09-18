@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function AdminOrderPage({ params }: Props) {
   const order = await db.order.findUnique({
     where: { id: (await params).id },
-    include: { items: true, history: { orderBy: { createdAt: "asc" } }, customer: { select: { id: true, name: true } } },
+    include: { items: true, history: { orderBy: { createdAt: "asc" } } },
   });
   if (!order) notFound();
 
@@ -33,13 +33,13 @@ export default async function AdminOrderPage({ params }: Props) {
       </Link>
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl md:text-4xl">{order.orderNumber}</h1>
+          <h1 className="font-sans text-2xl font-medium tabular-nums md:text-3xl">{order.orderNumber}</h1>
           <p className="mt-1 text-sm text-muted">Placed {formatDate(order.createdAt, true)}</p>
         </div>
         <OrderStatusBadge status={order.status} />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="space-y-6">
           <Panel title="Items">
             <OrderItems items={order.items} showSku />
@@ -70,7 +70,7 @@ export default async function AdminOrderPage({ params }: Props) {
               </a>
             </div>
             <p className="mt-3 text-xs text-muted">
-              {order.customer ? "Registered customer" : "Guest checkout"} · {previousOrders} other {previousOrders === 1 ? "order" : "orders"} with this email
+              {previousOrders} other {previousOrders === 1 ? "order" : "orders"} with this email
             </p>
           </Panel>
         </div>

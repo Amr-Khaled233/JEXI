@@ -187,7 +187,6 @@ model Order {
   // Random secret used in the confirmation link so order pages can't be enumerated.
   accessToken   String        @unique
   status        OrderStatus   @default(PENDING)
-  customerId    String?
   customerName  String
   email         String
   phone         String
@@ -206,10 +205,9 @@ model Order {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  customer Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  promo    PromoCode?           @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
-  items    OrderItem[]
-  history  OrderStatusHistory[]
+  promo   PromoCode?           @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
+  items   OrderItem[]
+  history OrderStatusHistory[]
 
   @@index([status, createdAt])
   @@index([email])
@@ -248,35 +246,6 @@ model OrderStatusHistory {
   createdAt        DateTime    @default(now())
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-}
-
-// ─── Customers ─────────────────────────────────────────────
-
-model Customer {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  phone        String?
-  passwordHash String
-  createdAt    DateTime @default(now())
-
-  addresses Address[]
-  orders    Order[]
-}
-
-model Address {
-  id          String   @id @default(cuid())
-  customerId  String
-  label       String? // "Home", "Work"
-  fullName    String
-  phone       String
-  governorate String
-  area        String
-  address     String
-  isDefault   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 }
 
 // ─── Admin & settings ──────────────────────────────────────
@@ -327,4 +296,11 @@ model StoreSettings {
   defaultShippingFee    Int     @default(0)
   defaultTheme          String  @default("dark") // "dark" | "light" | "system"
   lowStockThreshold     Int     @default(3)
+}
+
+// Fixed-window rate-limit counters (shared across serverless instances).
+model RateLimit {
+  key     String   @id
+  count   Int
+  resetAt DateTime
 }

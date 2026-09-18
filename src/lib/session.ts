@@ -1,22 +1,23 @@
-// Signed JWT session cookies (jose). Safe to import from proxy.ts.
+// Signed JWT session cookies for the admin dashboard (jose). Safe to import from proxy.ts.
 import { SignJWT, jwtVerify } from "jose";
 
-export type SessionKind = "admin" | "customer";
+export type SessionKind = "admin";
 
 export const SESSION_COOKIES: Record<SessionKind, string> = {
   admin: "jexi_admin",
-  customer: "jexi_customer",
 };
 
 export const SESSION_MAX_AGE: Record<SessionKind, number> = {
   admin: 60 * 60 * 12, // 12 hours
-  customer: 60 * 60 * 24 * 30, // 30 days
 };
+
+// Values that appear in docs/examples. Anyone could forge sessions with them.
+const PLACEHOLDER_SECRETS = new Set(["change-me-to-a-long-random-string"]);
 
 function secretKey() {
   const secret = process.env.SESSION_SECRET;
-  if (!secret || secret.length < 32) {
-    throw new Error("SESSION_SECRET must be set to a random string of at least 32 characters");
+  if (!secret || secret.length < 32 || PLACEHOLDER_SECRETS.has(secret)) {
+    throw new Error("SESSION_SECRET must be set to your own random string of at least 32 characters (see .env.example)");
   }
   return new TextEncoder().encode(secret);
 }

@@ -21,7 +21,7 @@ export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<H
 export function Select({ className, children, style, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
-      className={cn(control, "h-11 appearance-none bg-[length:12px] bg-[right_0.9rem_center] bg-no-repeat pr-9", className)}
+      className={cn(control, "h-11 appearance-none bg-size-[12px] bg-position-[right_0.9rem_center] bg-no-repeat pr-9", className)}
       style={{ backgroundImage: CHEVRON, ...style }}
       {...props}
     >

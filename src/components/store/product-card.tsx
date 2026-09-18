@@ -13,7 +13,7 @@ export function ProductCard({ product, priority }: { product: ProductCardData; p
 
   return (
     <Link href={`/product/${product.slug}`} className="group block">
-      <div className="relative aspect-[4/5] overflow-hidden rounded-[3px] bg-surface-2">
+      <div className="relative aspect-4/5 overflow-hidden rounded-[3px] bg-surface-2">
         {first && (
           <Image
             src={first}

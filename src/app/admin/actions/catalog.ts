@@ -21,7 +21,11 @@ function uniqueError(err: unknown, labels: Record<string, string>): string | nul
   return null;
 }
 
-const imagePath = z.string().regex(/^(\/|https:\/\/)/, "Invalid image URL");
+// Site-relative paths ("/samples/a.webp") or https URLs. Rejects protocol-relative "//host" URLs.
+const imagePath = z
+  .string()
+  .max(500)
+  .regex(/^(\/(?!\/)|https:\/\/)[^\s<>"'\\]+$/, "Invalid image URL");
 
 // ─── Products ─────────────────────────────────────────────
 

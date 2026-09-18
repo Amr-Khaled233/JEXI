@@ -6,7 +6,7 @@ export function Footer({ categories, settings }: { categories: { id: string; nam
   const whatsapp = settings.whatsapp?.replace(/[^\d]/g, "");
   return (
     <footer className="mt-24 bg-[#0e0a07] text-[#d9ccbc]">
-      <div className="container-page grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+      <div className="container-page grid gap-12 py-16 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <div className="flex flex-col items-start gap-5">
           <Logo size="md" />
           <p className="max-w-xs text-sm leading-relaxed text-[#a8988a]">{settings.tagline}</p>
@@ -21,8 +21,7 @@ export function Footer({ categories, settings }: { categories: { id: string; nam
         </FooterCol>
         <FooterCol title="Help">
           <FooterLink href="/track">Track your order</FooterLink>
-          <FooterLink href="/account">My account</FooterLink>
-          <FooterLink href="/cart">Shopping bag</FooterLink>
+          <FooterLink href="/cart">Your cart</FooterLink>
         </FooterCol>
         <FooterCol title="Contact">
           {settings.contactEmail && <FooterLink href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</FooterLink>}

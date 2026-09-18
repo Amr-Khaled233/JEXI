@@ -2,11 +2,10 @@
 
 import { after } from "next/server";
 import { z } from "zod";
-import { getCustomer } from "@/lib/auth";
-import { db } from "@/lib/db";
 import { notifyNewOrder } from "@/lib/email/notifications";
 import { OrderError, placeOrder } from "@/lib/orders";
 import { getPaymentProvider } from "@/lib/payments";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { isValidEgyptianMobile, normalizePhone } from "@/lib/utils";
 
 const checkoutSchema = z.object({
@@ -22,7 +21,6 @@ const checkoutSchema = z.object({
   notes: z.string().trim().max(500).optional(),
   paymentMethod: z.literal("COD"),
   promoCode: z.string().trim().max(40).nullish(),
-  saveAddress: z.boolean().optional(),
   items: z
     .array(
       z.discriminatedUnion("kind", [
@@ -30,7 +28,7 @@ const checkoutSchema = z.object({
         z.object({ kind: z.literal("giftbox"), giftBoxId: z.string().min(1), quantity: z.number().int().min(1).max(20) }),
       ]),
     )
-    .min(1, "Your bag is empty.")
+    .min(1, "Your cart is empty.")
     .max(50),
 });
 
@@ -55,38 +53,21 @@ export async function placeOrderAction(input: CheckoutInput): Promise<CheckoutRe
   const provider = getPaymentProvider(data.paymentMethod);
   if (!provider) return { ok: false, error: "This payment method isn't available." };
 
-  const customer = await getCustomer();
+  // Cash-on-delivery orders reserve stock, so cap how fast one visitor can place them.
+  if (!(await rateLimit(`checkout:${await clientIp()}`, 5, 10 * 60_000))) {
+    return { ok: false, error: "You've placed several orders in a short time. Please wait a few minutes, or contact us to order more." };
+  }
+
   const phone = normalizePhone(data.phone);
 
   try {
     const order = await placeOrder({
       items: data.items,
       promoCode: data.promoCode,
-      customerId: customer?.id ?? null,
       customer: { name: data.name, email: data.email, phone },
       shipping: { governorate: data.governorate, area: data.area, address: data.address, notes: data.notes },
       paymentMethod: data.paymentMethod,
     });
-
-    if (customer && data.saveAddress) {
-      const exists = await db.address.findFirst({
-        where: { customerId: customer.id, governorate: data.governorate, area: data.area, address: data.address },
-      });
-      if (!exists) {
-        const count = await db.address.count({ where: { customerId: customer.id } });
-        await db.address.create({
-          data: {
-            customerId: customer.id,
-            fullName: data.name,
-            phone,
-            governorate: data.governorate,
-            area: data.area,
-            address: data.address,
-            isDefault: count === 0,
-          },
-        });
-      }
-    }
 
     // Emails go out after the response is sent, so checkout stays fast.
     after(() => notifyNewOrder(order.id));

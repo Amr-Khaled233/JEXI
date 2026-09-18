@@ -35,10 +35,10 @@ export function OrderStatusBadge({ status }: { status: OrderStatusKey }) {
   return <Badge tone={ORDER_STATUS_TONES[status]}>{ORDER_STATUSES[status].label}</Badge>;
 }
 
-export function Table({ children, className }: { children: React.ReactNode; className?: string }) {
+export function Table({ children, className, compact }: { children: React.ReactNode; className?: string; compact?: boolean }) {
   return (
     <div className={cn("card overflow-x-auto", className)}>
-      <table className="w-full min-w-[40rem] text-left text-sm [&_td]:px-4 [&_td]:py-3 [&_th]:px-4 [&_th]:py-3 [&_th]:text-[0.65rem] [&_th]:font-medium [&_th]:tracking-[0.16em] [&_th]:text-muted [&_th]:uppercase [&_tbody_tr]:border-t [&_tbody_tr]:border-border">
+      <table className={cn("w-full text-left text-sm", !compact && "min-w-160", "[&_td]:px-4 [&_td]:py-3 [&_th]:px-4 [&_th]:py-3 [&_th]:text-[0.65rem] [&_th]:font-medium [&_th]:tracking-[0.16em] [&_th]:text-muted [&_th]:uppercase [&_tbody_tr]:border-t [&_tbody_tr]:border-border")}>
         {children}
       </table>
     </div>

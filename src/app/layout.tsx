@@ -24,7 +24,7 @@ const jost = Jost({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
-  title: { default: "JEXI Accessories — Timeless everyday jewelry", template: "%s · JEXI Accessories" },
+  title: { default: "JEXI Accessories | Timeless everyday jewelry", template: "%s | JEXI Accessories" },
   description: "Necklaces, hand chains, charms, rings, earrings and bracelets in gold, silver and rose gold. Free shipping across Egypt.",
   openGraph: { siteName: "JEXI Accessories", type: "website", images: ["/brand/logo-hero.jpg"] },
 };

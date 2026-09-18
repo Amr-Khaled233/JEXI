@@ -11,7 +11,7 @@ type Category = { id: string; name: string; slug: string; description: string | 
 export function CategoryForm({ category, productCount }: { category?: Category; productCount?: number }) {
   const [state, action, pending] = useActionState(saveCategoryAction, undefined);
   return (
-    <form action={action} className="grid grid-cols-1 gap-4 md:grid-cols-[8rem_1fr]" key={category ? category.id : state?.success}>
+    <form action={action} className="grid grid-cols-1 gap-4 md:grid-cols-[8rem_minmax(0,1fr)]" key={category ? category.id : state?.success}>
       {category && <input type="hidden" name="id" value={category.id} />}
       <SingleImageField name="image" defaultValue={category?.image} />
       <div className="grid content-start gap-3 sm:grid-cols-2">

@@ -20,7 +20,7 @@ export default async function ShippingPage() {
         {settings.freeShippingEnabled
           ? "Free shipping is on. A zone only charges if you set a fee for it below"
           : `Free shipping is off. Zones without a fee charge the default ${formatMoney(settings.defaultShippingFee)}`}
-        {settings.freeShippingThreshold != null && ` — orders over ${formatMoney(settings.freeShippingThreshold)} always ship free`}. Change this in Settings.
+        {settings.freeShippingThreshold != null && `, and orders over ${formatMoney(settings.freeShippingThreshold)} always ship free`}. Change this in Settings.
       </Alert>
 
       <div className="mb-4 flex gap-2">
@@ -35,7 +35,7 @@ export default async function ShippingPage() {
       </div>
 
       <div className="card divide-y divide-border">
-        <div className="hidden grid-cols-[1fr_7rem_10rem_12rem_5rem] gap-3 px-4 py-3 text-[0.65rem] tracking-[0.16em] text-muted uppercase md:grid">
+        <div className="hidden grid-cols-[minmax(0,1fr)_7rem_10rem_12rem_5rem] gap-3 px-4 py-3 text-[0.65rem] tracking-[0.16em] text-muted uppercase md:grid">
           <span>Governorate</span>
           <span>Visible</span>
           <span>Fee (EGP)</span>

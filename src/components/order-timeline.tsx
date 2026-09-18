@@ -51,7 +51,7 @@ export function OrderTimeline({ status, history }: { status: OrderStatusKey; his
         <ul className="space-y-3 border-l border-border pl-5">
           {[...history].reverse().map((h) => (
             <li key={h.id} className="relative">
-              <span className="absolute top-1.5 -left-[23.5px] size-2 rounded-full bg-gold" />
+              <span className="absolute top-1.5 left-[-23.5px] size-2 rounded-full bg-gold" />
               <p className="text-sm font-medium">{ORDER_STATUSES[h.status].label}</p>
               <p className="text-xs text-muted">{formatDate(h.createdAt, true)}</p>
               {h.note && <p className="mt-1 text-sm text-fg/80">{h.note}</p>}

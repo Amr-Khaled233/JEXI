@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIES, verifySession } from "@/lib/session";
 
 // Fast redirect for signed-out visitors. Pages and server actions still call
-// requireAdmin()/requireCustomer(), which is the real authorization check.
+// requireAdmin(), which is the real authorization check.
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
@@ -16,18 +16,9 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  if (pathname.startsWith("/account") && !["/account/login", "/account/register"].includes(pathname)) {
-    const ok = await verifySession(request.cookies.get(SESSION_COOKIES.customer)?.value, "customer");
-    if (!ok) {
-      const url = new URL("/account/login", request.url);
-      url.searchParams.set("next", pathname + search);
-      return NextResponse.redirect(url);
-    }
-  }
-
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/account/:path*"],
+  matcher: ["/admin/:path*"],
 };

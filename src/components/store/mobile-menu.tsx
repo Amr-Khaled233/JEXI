@@ -3,18 +3,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, PackageSearch, X } from "lucide-react";
 import { Logo } from "@/components/logo";
 
-export function MobileMenu({ categories, signedIn }: { categories: { id: string; name: string; slug: string }[]; signedIn: boolean }) {
+export function MobileMenu({ categories }: { categories: { id: string; name: string; slug: string }[] }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
+    if (!open) return;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = "";
+      document.removeEventListener("keydown", onKey);
     };
   }, [open]);
 
@@ -37,14 +41,14 @@ export function MobileMenu({ categories, signedIn }: { categories: { id: string;
       {open && (
         <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="animate-fade-in absolute inset-0 bg-overlay" onClick={() => setOpen(false)} />
-          <div className="animate-slide-in-left absolute inset-y-0 left-0 flex w-[82%] max-w-sm flex-col bg-bg shadow-2xl">
+          <div className="animate-slide-in-right absolute inset-y-0 right-0 flex w-[85%] max-w-sm flex-col bg-bg shadow-2xl">
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
               <Logo size="sm" />
               <button type="button" onClick={() => setOpen(false)} aria-label="Close menu" className="p-2 hover:text-gold">
                 <X className="size-5" strokeWidth={1.5} />
               </button>
             </div>
-            <nav className="flex-1 overflow-y-auto px-5 py-4">
+            <nav className="flex-1 overflow-y-auto px-5 py-2">
               <ul className="divide-y divide-border/60">
                 {links.map((l) => (
                   <li key={l.href}>
@@ -55,12 +59,9 @@ export function MobileMenu({ categories, signedIn }: { categories: { id: string;
                 ))}
               </ul>
             </nav>
-            <div className="space-y-1 border-t border-border px-5 py-4 text-xs tracking-[0.18em] uppercase">
-              <Link href="/track" className="block py-2 hover:text-gold">
-                Track your order
-              </Link>
-              <Link href="/account" className="block py-2 hover:text-gold">
-                {signedIn ? "My account" : "Sign in / Register"}
+            <div className="border-t border-border px-5 py-4">
+              <Link href="/track" className="flex items-center gap-3 py-2 text-xs tracking-[0.18em] uppercase hover:text-gold">
+                <PackageSearch className="size-4" strokeWidth={1.5} /> Track your order
               </Link>
             </div>
           </div>

@@ -144,9 +144,16 @@ const settingsSchema = z.object({
 });
 
 export async function saveSettingsAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
-  await requireAdmin();
+  const me = await requireAdmin();
   const parsed = settingsSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  // Password-reset links are sent to the notification email, so letting Staff change
+  // it would let them reset the Owner's password. Only the Owner may change it.
+  const current = await db.storeSettings.findUnique({ where: { id: 1 }, select: { notificationEmail: true } });
+  if (me.role !== "OWNER" && parsed.data.notificationEmail !== (current?.notificationEmail ?? null)) {
+    return { error: "Only the store owner can change the notification email." };
+  }
 
   const thresholdRaw = String(formData.get("freeShippingThreshold") ?? "").trim();
   const threshold = thresholdRaw ? parseMoneyInput(thresholdRaw) : null;

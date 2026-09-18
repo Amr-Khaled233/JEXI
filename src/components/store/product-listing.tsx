@@ -27,7 +27,7 @@ export async function ProductListing({
   };
 
   return (
-    <div className="grid grid-cols-1 gap-10 lg:grid-cols-[14rem_1fr]">
+    <div className="grid grid-cols-1 gap-10 lg:grid-cols-[14rem_minmax(0,1fr)]">
       <aside className="hidden lg:block">
         <div className="sticky top-36">
           <Suspense>

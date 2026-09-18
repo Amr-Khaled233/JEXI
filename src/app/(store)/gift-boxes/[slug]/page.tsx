@@ -33,8 +33,8 @@ export default async function GiftBoxPage({ params }: Props) {
         </Link>
       </nav>
 
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
-        <div className="relative aspect-[4/5] overflow-hidden rounded-[3px] bg-surface-2">
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16">
+        <div className="relative aspect-4/5 overflow-hidden rounded-[3px] bg-surface-2">
           <Image src={box.coverImage} alt={box.name} fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
         </div>
 
@@ -59,7 +59,7 @@ export default async function GiftBoxPage({ params }: Props) {
             <ul className="space-y-4">
               {box.items.map((item) => (
                 <li key={item.id} className="flex items-center gap-4">
-                  <div className="relative aspect-[4/5] w-14 shrink-0 overflow-hidden rounded-[3px] bg-surface-2">
+                  <div className="relative aspect-4/5 w-14 shrink-0 overflow-hidden rounded-[3px] bg-surface-2">
                     {item.product.images[0] && <Image src={item.product.images[0]} alt="" fill sizes="56px" className="object-cover" />}
                   </div>
                   <div className="min-w-0 flex-1">

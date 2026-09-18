@@ -54,7 +54,7 @@ export default async function ProductPage({ params }: Props) {
         )}
       </nav>
 
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16">
         <ProductGallery images={product.images} name={product.name} />
 
         <div className="lg:sticky lg:top-36 lg:self-start">

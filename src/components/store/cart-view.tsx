@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Loader2, ShoppingBag } from "lucide-react";
+import { Loader2, ShoppingCart } from "lucide-react";
 import { CartLines, OrderTotals, PromoCodeInput } from "@/components/store/cart-parts";
 import { useCartQuote } from "@/components/store/use-cart-quote";
 import { buttonClasses } from "@/components/ui/button";
@@ -13,8 +13,8 @@ export function CartView() {
   if (hydrated && items.length === 0) {
     return (
       <div className="card flex flex-col items-center gap-4 px-6 py-20 text-center">
-        <ShoppingBag className="size-10 text-gold" strokeWidth={1} />
-        <p className="font-serif text-2xl">Your bag is empty</p>
+        <ShoppingCart className="size-10 text-gold" strokeWidth={1} />
+        <p className="font-serif text-2xl">Your cart is empty</p>
         <Link href="/shop" className={buttonClasses("primary")}>
           Discover the collection
         </Link>
@@ -33,7 +33,7 @@ export function CartView() {
   const blocked = quote.itemCount === 0 || quote.lines.some((l) => l.issue);
 
   return (
-    <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_24rem]">
+    <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
       <div className="card px-5">
         <CartLines quote={quote} />
       </div>

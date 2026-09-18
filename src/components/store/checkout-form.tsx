@@ -9,39 +9,26 @@ import { placeOrderAction } from "@/app/actions/checkout";
 import { OrderTotals, PromoCodeInput } from "@/components/store/cart-parts";
 import { useCartQuote } from "@/components/store/use-cart-quote";
 import { Button, buttonClasses } from "@/components/ui/button";
-import { Alert, Checkbox, Field, Input, Select, Textarea } from "@/components/ui/field";
+import { Alert, Field, Input, Select, Textarea } from "@/components/ui/field";
 import { COLORS } from "@/lib/constants";
 import { useCart } from "@/lib/cart-store";
 import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
 type Zone = { name: string; estimatedDelivery: string | null };
-type SavedAddress = { id: string; label: string | null; fullName: string; phone: string; governorate: string; area: string; address: string };
 
-export function CheckoutForm({
-  zones,
-  paymentMethods,
-  customer,
-  addresses,
-}: {
-  zones: Zone[];
-  paymentMethods: { method: "COD"; label: string; description: string }[];
-  customer: { name: string; email: string; phone: string } | null;
-  addresses: SavedAddress[];
-}) {
+export function CheckoutForm({ zones, paymentMethods }: { zones: Zone[]; paymentMethods: { method: "COD"; label: string; description: string }[] }) {
   const router = useRouter();
   const clear = useCart((s) => s.clear);
-  const firstAddress = addresses[0];
   const [form, setForm] = useState({
-    name: firstAddress?.fullName ?? customer?.name ?? "",
-    email: customer?.email ?? "",
-    phone: firstAddress?.phone ?? customer?.phone ?? "",
-    governorate: firstAddress && zones.some((z) => z.name === firstAddress.governorate) ? firstAddress.governorate : "",
-    area: firstAddress?.area ?? "",
-    address: firstAddress?.address ?? "",
+    name: "",
+    email: "",
+    phone: "",
+    governorate: "",
+    area: "",
+    address: "",
     notes: "",
     paymentMethod: paymentMethods[0]?.method ?? "COD",
-    saveAddress: addresses.length === 0,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -57,7 +44,7 @@ export function CheckoutForm({
   });
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const value = e.target instanceof HTMLInputElement && e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    const value = e.target.value;
     setForm((f) => ({ ...f, [key]: value }));
     setErrors((er) => ({ ...er, [key]: "" }));
   };
@@ -67,7 +54,7 @@ export function CheckoutForm({
   if (hydrated && items.length === 0 && !placed) {
     return (
       <div className="card flex flex-col items-center gap-4 px-6 py-20 text-center">
-        <p className="font-serif text-2xl">Your bag is empty</p>
+        <p className="font-serif text-2xl">Your cart is empty</p>
         <Link href="/shop" className={buttonClasses("primary")}>
           Continue shopping
         </Link>
@@ -95,20 +82,11 @@ export function CheckoutForm({
   const blocked = !quote || quote.itemCount === 0 || quote.issues.length > 0 || (!!promoCode && quote.promo?.applied === false);
 
   return (
-    <form onSubmit={submit} className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_26rem]" noValidate>
+    <form onSubmit={submit} className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_26rem]" noValidate>
       <div className="space-y-10">
         {formError && <Alert tone="error">{formError}</Alert>}
 
         <Section step={1} title="Contact">
-          {!customer && (
-            <p className="-mt-2 mb-4 text-sm text-muted">
-              Have an account?{" "}
-              <Link href="/account/login?next=/checkout" className="text-gold underline underline-offset-4">
-                Sign in
-              </Link>{" "}
-              for faster checkout.
-            </p>
-          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Full name" htmlFor="name" error={errors.name} className="sm:col-span-2">
               <Input id="name" autoComplete="name" value={form.name} onChange={set("name")} required />
@@ -123,33 +101,6 @@ export function CheckoutForm({
         </Section>
 
         <Section step={2} title="Shipping address">
-          {addresses.length > 0 && (
-            <Field label="Saved addresses" htmlFor="saved" className="mb-4">
-              <Select
-                id="saved"
-                defaultValue={firstAddress?.id}
-                onChange={(e) => {
-                  const a = addresses.find((x) => x.id === e.target.value);
-                  if (a)
-                    setForm((f) => ({
-                      ...f,
-                      name: a.fullName,
-                      phone: a.phone,
-                      governorate: zones.some((z) => z.name === a.governorate) ? a.governorate : "",
-                      area: a.area,
-                      address: a.address,
-                    }));
-                }}
-              >
-                {addresses.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.label ? `${a.label} — ` : ""}
-                    {a.address}, {a.area}, {a.governorate}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
               label="Governorate"
@@ -185,9 +136,6 @@ export function CheckoutForm({
               <Textarea id="notes" rows={2} placeholder="Landmark, best time to call…" value={form.notes} onChange={set("notes")} className="min-h-0" />
             </Field>
           </div>
-          {customer && (
-            <Checkbox className="mt-4" label="Save this address to my account" checked={form.saveAddress} onChange={set("saveAddress")} />
-          )}
           {quote && (
             <p className="mt-4 text-sm">
               Shipping:{" "}
@@ -230,7 +178,7 @@ export function CheckoutForm({
             <ul className="max-h-72 space-y-4 overflow-y-auto pr-1">
               {quote.lines.map((l) => (
                 <li key={l.key} className="flex gap-3">
-                  <div className="relative aspect-[4/5] w-14 shrink-0 overflow-hidden rounded-[3px] bg-surface-2">
+                  <div className="relative aspect-4/5 w-14 shrink-0 overflow-hidden rounded-[3px] bg-surface-2">
                     {l.image && <Image src={l.image} alt="" fill sizes="56px" className="object-cover" />}
                     {l.quantity > 0 && (
                       <span className="absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-full bg-fg text-[0.6rem] text-bg">{l.quantity}</span>
@@ -252,7 +200,7 @@ export function CheckoutForm({
               <Alert tone="error">
                 {quote.issues[0]}{" "}
                 <Link href="/cart" className="underline">
-                  Review bag
+                  Review cart
                 </Link>
               </Alert>
             )}

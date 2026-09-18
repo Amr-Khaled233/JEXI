@@ -21,7 +21,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
               aria-label={`Image ${i + 1}`}
               onClick={() => setActive(i)}
               className={cn(
-                "relative aspect-[4/5] w-16 shrink-0 overflow-hidden rounded-[3px] bg-surface-2 ring-1 transition md:w-full",
+                "relative aspect-4/5 w-16 shrink-0 overflow-hidden rounded-[3px] bg-surface-2 ring-1 transition md:w-full",
                 i === active ? "ring-gold" : "ring-border opacity-70 hover:opacity-100",
               )}
             >
@@ -30,7 +30,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
           ))}
         </div>
       )}
-      <div className="relative aspect-[4/5] flex-1 overflow-hidden rounded-[3px] bg-surface-2">
+      <div className="relative aspect-4/5 flex-1 overflow-hidden rounded-[3px] bg-surface-2">
         {src && <Image key={src} src={src} alt={name} fill priority sizes="(min-width: 1024px) 45vw, 100vw" className="animate-fade-in object-cover" />}
       </div>
     </div>

@@ -45,7 +45,7 @@ export default async function HomePage() {
 
       {/* Category shortcuts */}
       <section className="container-page py-16 md:py-20">
-        <div className="scrollbar-none -mx-4 flex snap-x gap-4 overflow-x-auto px-4 md:mx-0 md:grid md:grid-cols-6 md:overflow-visible md:px-0">
+        <div className="scrollbar-none -mx-4 flex snap-x scroll-px-4 gap-4 overflow-x-auto px-4 md:mx-0 md:grid md:grid-cols-6 md:overflow-visible md:px-0">
           {categories.map((c) => (
             <Link key={c.id} href={`/category/${c.slug}`} className="group w-32 shrink-0 snap-start text-center md:w-auto">
               <div className="relative mx-auto aspect-square w-full overflow-hidden rounded-full bg-surface-2 ring-1 ring-border transition group-hover:ring-gold">
@@ -68,7 +68,7 @@ export default async function HomePage() {
       {featuredBox && (
         <section className="my-16 bg-[#120d0a] text-[#f1e8dc] md:my-24">
           <div className="container-page grid grid-cols-1 items-center gap-10 py-16 md:grid-cols-2 md:py-0">
-            <div className="relative aspect-[4/5] w-full overflow-hidden md:my-16 md:max-w-md md:justify-self-end">
+            <div className="relative aspect-4/5 w-full overflow-hidden md:my-16 md:max-w-md md:justify-self-end">
               <Image src={featuredBox.coverImage} alt={featuredBox.name} fill sizes="(min-width: 768px) 28rem, 100vw" className="object-cover" />
             </div>
             <div className="max-w-md">
@@ -117,7 +117,7 @@ export default async function HomePage() {
 
 function ProductRow({ products }: { products: Awaited<ReturnType<typeof getTaggedProducts>> }) {
   return (
-    <div className="scrollbar-none -mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-4 md:gap-6 md:overflow-visible md:px-0">
+    <div className="scrollbar-none -mx-4 flex snap-x scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-4 md:gap-6 md:overflow-visible md:px-0">
       {products.slice(0, 8).map((p) => (
         <div key={p.id} className="w-[46%] shrink-0 snap-start sm:w-[31%] md:w-auto">
           <ProductCard product={p} />

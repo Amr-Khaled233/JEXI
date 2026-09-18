@@ -38,7 +38,7 @@ export function OrderItems({ items, showSku }: { items: Item[]; showSku?: boolea
     <ul className="divide-y divide-border">
       {items.map((item) => (
         <li key={item.id} className="flex gap-4 py-4">
-          <div className="relative aspect-[4/5] w-16 shrink-0 overflow-hidden rounded-[3px] bg-surface-2">
+          <div className="relative aspect-4/5 w-16 shrink-0 overflow-hidden rounded-[3px] bg-surface-2">
             {item.image && <Image src={item.image} alt="" fill sizes="64px" className="object-cover" />}
           </div>
           <div className="min-w-0 flex-1">
@@ -52,7 +52,7 @@ export function OrderItems({ items, showSku }: { items: Item[]; showSku?: boolea
               <ul className="mt-1.5 space-y-0.5 text-xs text-muted">
                 {(item.contents as { name: string; color: ColorKey; quantity: number }[]).map((c, i) => (
                   <li key={i}>
-                    — {c.name} · {COLORS[c.color]?.label}
+                    {c.name}, {COLORS[c.color]?.label}
                     {c.quantity > 1 && ` × ${c.quantity}`}
                   </li>
                 ))}

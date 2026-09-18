@@ -36,7 +36,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     <>
       <PageTitle title="Products" description={`${products.length} products`} action={{ href: "/admin/products/new", label: "Add product" }} />
 
-      <form className="mb-4 grid gap-2 sm:grid-cols-[1fr_12rem_10rem_auto]">
+      <form className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_12rem_10rem_auto]">
         <Input name="q" defaultValue={q} placeholder="Search name or SKU" className="h-10" aria-label="Search products" />
         <Select name="category" defaultValue={category} className="h-10" aria-label="Category">
           <option value="">All categories</option>
@@ -76,7 +76,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
               <tr key={p.id}>
                 <td>
                   <Link href={`/admin/products/${p.id}`} className="flex items-center gap-3 hover:text-gold">
-                    <span className="relative aspect-[4/5] w-10 shrink-0 overflow-hidden rounded-[2px] bg-surface-2">
+                    <span className="relative aspect-4/5 w-10 shrink-0 overflow-hidden rounded-[2px] bg-surface-2">
                       {p.images[0] && <Image src={p.images[0]} alt="" fill sizes="40px" className="object-cover" />}
                     </span>
                     <span>

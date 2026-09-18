@@ -8,7 +8,7 @@ import { formatMoney } from "@/lib/money";
 
 export const metadata: Metadata = {
   title: "Gift Boxes",
-  description: "Curated JEXI jewelry sets, presented in a keepsake box — and priced for less than buying separately.",
+  description: "Curated JEXI jewelry sets, presented in a keepsake box and priced for less than buying separately.",
 };
 
 export default async function GiftBoxesPage() {
@@ -19,7 +19,7 @@ export default async function GiftBoxesPage() {
       <PageHeader
         eyebrow="Curated sets"
         title="Gift Boxes"
-        description="Hand-picked pieces that belong together, wrapped in our signature box — and priced for less than buying them separately."
+        description="Hand-picked pieces that belong together, wrapped in our signature box and priced for less than buying them separately."
       />
       <div className="container-page py-12 md:py-16">
         {boxes.length === 0 ? (
@@ -30,7 +30,7 @@ export default async function GiftBoxesPage() {
               const { separate, savings, savingsPercent, stock } = giftBoxValue(box);
               return (
                 <Link key={box.id} href={`/gift-boxes/${box.slug}`} className="group block">
-                  <div className="relative aspect-[4/5] overflow-hidden rounded-[3px] bg-surface-2">
+                  <div className="relative aspect-4/5 overflow-hidden rounded-[3px] bg-surface-2">
                     <Image src={box.coverImage} alt={box.name} fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-cover transition duration-700 group-hover:scale-[1.04]" />
                     <div className="absolute top-3 left-3 flex gap-2">
                       {stock <= 0 ? <Badge tone="dark">Sold out</Badge> : savingsPercent > 0 && <Badge tone="gold">Save {savingsPercent}%</Badge>}

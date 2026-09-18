@@ -10,7 +10,6 @@ export class OrderError extends Error {}
 export type PlaceOrderInput = {
   items: CartItemInput[];
   promoCode?: string | null;
-  customerId?: string | null;
   customer: { name: string; email: string; phone: string };
   shipping: { governorate: string; area: string; address: string; notes?: string | null };
   paymentMethod: "COD";
@@ -37,7 +36,7 @@ export async function placeOrder(input: PlaceOrderInput) {
     customerPhone: phone,
   });
 
-  if (quote.lines.length === 0) throw new OrderError("Your bag is empty.");
+  if (quote.lines.length === 0) throw new OrderError("Your cart is empty.");
   if (quote.issues.length) throw new OrderError(quote.issues[0]);
   if (input.promoCode?.trim() && !quote.promo?.applied) throw new OrderError(quote.promo?.message ?? "Invalid promo code.");
 
@@ -62,7 +61,7 @@ export async function placeOrder(input: PlaceOrderInput) {
             where: { id: variantId, stock: { gte: qty } },
             data: { stock: { decrement: qty } },
           });
-          if (res.count === 0) throw new OrderError(`Sorry — ${name} just sold out. Please review your bag.`);
+          if (res.count === 0) throw new OrderError(`Sorry, ${name} just sold out. Please review your cart.`);
         }
 
         if (quote.promo?.applied && quote.promo.promoId) {
@@ -76,7 +75,6 @@ export async function placeOrder(input: PlaceOrderInput) {
           data: {
             orderNumber: generateOrderNumber(),
             accessToken: randomBytes(24).toString("base64url"),
-            customerId: input.customerId ?? null,
             customerName: input.customer.name.trim(),
             email,
             phone,

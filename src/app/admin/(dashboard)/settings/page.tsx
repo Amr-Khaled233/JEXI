@@ -28,12 +28,13 @@ export default async function SettingsPage() {
             </Alert>
           ) : (
             <Alert tone="info">
-              SMTP isn&apos;t configured, so emails are skipped (and logged). Set <code>GMAIL_USER</code> and <code>GMAIL_APP_PASSWORD</code> in your environment — see the README.
+              SMTP isn&apos;t configured, so emails are skipped (and logged). Set <code>GMAIL_USER</code> and <code>GMAIL_APP_PASSWORD</code> in your environment (see the README).
             </Alert>
           )}
         </Panel>
 
         <SettingsForm
+          isOwner={me.role === "OWNER"}
           initial={{
             ...settings,
             freeShippingThreshold: settings.freeShippingThreshold != null ? String(fromMinor(settings.freeShippingThreshold)) : "",

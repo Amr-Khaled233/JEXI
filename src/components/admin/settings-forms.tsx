@@ -22,7 +22,7 @@ type SettingsValues = {
   lowStockThreshold: number;
 };
 
-export function SettingsForm({ initial }: { initial: SettingsValues }) {
+export function SettingsForm({ initial, isOwner }: { initial: SettingsValues; isOwner: boolean }) {
   const [state, action, pending] = useActionState(saveSettingsAction, undefined);
   return (
     <form action={action} className="space-y-6">
@@ -54,8 +54,13 @@ export function SettingsForm({ initial }: { initial: SettingsValues }) {
 
       <Panel title="Notifications & appearance">
         <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="New-order notification email" htmlFor="notificationEmail" hint="Where new-order alerts are sent." className="sm:col-span-3">
-            <Input id="notificationEmail" name="notificationEmail" type="email" defaultValue={initial.notificationEmail ?? ""} />
+          <Field
+            label="New-order notification email"
+            htmlFor="notificationEmail"
+            hint={isOwner ? "New-order alerts and admin password-reset links are sent here." : "Only the store owner can change this, because password-reset links are sent here."}
+            className="sm:col-span-3"
+          >
+            <Input id="notificationEmail" name="notificationEmail" type="email" defaultValue={initial.notificationEmail ?? ""} readOnly={!isOwner} className={isOwner ? undefined : "opacity-60"} />
           </Field>
           <Field label="Default theme" htmlFor="defaultTheme" hint="Visitors can still switch.">
             <Select id="defaultTheme" name="defaultTheme" defaultValue={initial.defaultTheme}>

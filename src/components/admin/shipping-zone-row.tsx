@@ -14,7 +14,7 @@ export function ShippingZoneRow({ zone }: { zone: Zone }) {
   const [, startTransition] = useTransition();
 
   return (
-    <form action={action} className={cn("grid items-center gap-3 px-4 py-3 md:grid-cols-[1fr_7rem_10rem_12rem_5rem]", !enabled && "opacity-60")}>
+    <form action={action} className={cn("grid items-center gap-3 px-4 py-3 md:grid-cols-[minmax(0,1fr)_7rem_10rem_12rem_5rem]", !enabled && "opacity-60")}>
       <input type="hidden" name="id" value={zone.id} />
       <input type="hidden" name="enabled" value={enabled ? "on" : ""} />
       <span className="font-medium">{zone.name}</span>
@@ -31,7 +31,7 @@ export function ShippingZoneRow({ zone }: { zone: Zone }) {
         }
         className={cn("relative h-6 w-11 rounded-full transition", enabled ? "bg-gold" : "bg-border")}
       >
-        <span className={cn("absolute top-0.5 size-5 rounded-full bg-white shadow transition-all", enabled ? "left-[1.375rem]" : "left-0.5")} />
+        <span className={cn("absolute top-0.5 size-5 rounded-full bg-white shadow transition-all", enabled ? "left-5.5" : "left-0.5")} />
       </button>
       <Input name="fee" type="number" min={0} step="0.01" placeholder="Default" defaultValue={zone.fee} className="h-9" aria-label={`${zone.name} fee`} />
       <Input name="estimatedDelivery" placeholder="e.g. 2–4 business days" defaultValue={zone.estimatedDelivery} className="h-9" aria-label={`${zone.name} delivery estimate`} />

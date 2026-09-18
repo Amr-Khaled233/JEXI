@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { Loader2, ShoppingBag, X } from "lucide-react";
+import { Loader2, ShoppingCart, X } from "lucide-react";
 import { buttonClasses } from "@/components/ui/button";
 import { CartLines, OrderTotals, PromoCodeInput } from "@/components/store/cart-parts";
 import { useCartQuote } from "@/components/store/use-cart-quote";
@@ -32,20 +32,20 @@ export function CartDrawer() {
   const empty = items.length === 0;
 
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Shopping bag">
+    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Shopping cart">
       <div className="animate-fade-in absolute inset-0 bg-overlay" onClick={closeCart} />
       <aside className="animate-slide-in-right absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-bg shadow-2xl">
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <h2 className="font-serif text-2xl">Your Bag</h2>
-          <button type="button" onClick={closeCart} aria-label="Close bag" className="p-2 hover:text-gold">
+          <h2 className="font-serif text-2xl">Your Cart</h2>
+          <button type="button" onClick={closeCart} aria-label="Close cart" className="p-2 hover:text-gold">
             <X className="size-5" strokeWidth={1.5} />
           </button>
         </div>
 
         {empty ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
-            <ShoppingBag className="size-10 text-gold" strokeWidth={1} />
-            <p className="font-serif text-xl">Your bag is empty</p>
+            <ShoppingCart className="size-10 text-gold" strokeWidth={1} />
+            <p className="font-serif text-xl">Your cart is empty</p>
             <Link href="/shop" onClick={closeCart} className={buttonClasses("primary", "md")}>
               Discover the collection
             </Link>
@@ -64,7 +64,7 @@ export function CartDrawer() {
               <OrderTotals quote={quote} className={loading ? "opacity-60" : undefined} />
               <div className="grid grid-cols-2 gap-2">
                 <Link href="/cart" onClick={closeCart} className={buttonClasses("outline", "md")}>
-                  View bag
+                  View cart
                 </Link>
                 <Link
                   href="/checkout"

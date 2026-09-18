@@ -112,7 +112,7 @@ export async function evaluatePromo(
   }
 
   const { eligibleSubtotal, discount } = calculateDiscount(promo, lines);
-  if (eligibleSubtotal === 0 || discount === 0) return fail("This code doesn't apply to the items in your bag.");
+  if (eligibleSubtotal === 0 || discount === 0) return fail("This code doesn't apply to the items in your cart.");
 
   const what = promo.discountType === "PERCENTAGE" ? `${promo.value}% off` : `${formatMoney(promo.value)} off`;
   const scope = promo.scope === "ALL" ? "" : " eligible items";

@@ -39,7 +39,7 @@ function CartLineRow({ line, compact, onNavigate }: { line: QuoteLine; compact?:
 
   return (
     <li className="flex gap-4 py-4">
-      <Link href={line.href} onClick={onNavigate} className="relative aspect-[4/5] w-20 shrink-0 overflow-hidden rounded-[3px] bg-surface-2 sm:w-24">
+      <Link href={line.href} onClick={onNavigate} className="relative aspect-4/5 w-20 shrink-0 overflow-hidden rounded-[3px] bg-surface-2 sm:w-24">
         {line.image && <Image src={line.image} alt={line.name} fill sizes="96px" className="object-cover" />}
       </Link>
       <div className="flex min-w-0 flex-1 flex-col">
@@ -126,27 +126,31 @@ export function PromoCodeInput({ quote }: { quote: Quote | null }) {
     );
   }
 
+  // Not a <form>: this sits inside the checkout form, and forms can't be nested.
+  const apply = () => {
+    if (value.trim()) setPromoCode(value);
+    setValue("");
+  };
   return (
-    <form
-      className="flex gap-2"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (value.trim()) setPromoCode(value);
-        setValue("");
-      }}
-    >
+    <div className="flex gap-2">
       <Input
         value={value}
         onChange={(e) => setValue(e.target.value.toUpperCase())}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            apply();
+          }
+        }}
         placeholder="Promo code"
         aria-label="Promo code"
-        className="h-10 uppercase tracking-wider"
+        className="h-10 min-w-0 uppercase tracking-wider"
         autoComplete="off"
       />
-      <Button type="submit" variant="outline" size="sm" className="h-10 shrink-0">
+      <Button type="button" variant="outline" size="sm" className="h-10 shrink-0" onClick={apply}>
         Apply
       </Button>
-    </form>
+    </div>
   );
 }
 

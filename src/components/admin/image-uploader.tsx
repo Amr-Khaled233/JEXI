@@ -51,7 +51,7 @@ export function ImageUploader({ value, onChange, max = 10 }: { value: string[]; 
     <div>
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
         {value.map((src, i) => (
-          <div key={src + i} className="group relative aspect-[4/5] overflow-hidden rounded-[3px] bg-surface-2 ring-1 ring-border">
+          <div key={src + i} className="group relative aspect-4/5 overflow-hidden rounded-[3px] bg-surface-2 ring-1 ring-border">
             <Image src={src} alt="" fill sizes="160px" className="object-cover" />
             {i === 0 && <span className="absolute top-1.5 left-1.5 rounded-full bg-gold px-2 py-0.5 text-[0.55rem] tracking-wider text-on-gold uppercase">Cover</span>}
             <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/55 p-1 text-white opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
@@ -72,7 +72,7 @@ export function ImageUploader({ value, onChange, max = 10 }: { value: string[]; 
             type="button"
             onClick={() => input.current?.click()}
             disabled={busy}
-            className="flex aspect-[4/5] flex-col items-center justify-center gap-2 rounded-[3px] border border-dashed border-border text-xs text-muted transition hover:border-gold hover:text-gold"
+            className="flex aspect-4/5 flex-col items-center justify-center gap-2 rounded-[3px] border border-dashed border-border text-xs text-muted transition hover:border-gold hover:text-gold"
           >
             {busy ? <Loader2 className="size-5 animate-spin" /> : <ImagePlus className="size-5" strokeWidth={1.5} />}
             {busy ? "Uploading…" : "Add images"}
@@ -110,7 +110,7 @@ export function ImageUploader({ value, onChange, max = 10 }: { value: string[]; 
 export function SingleImageField({ name, defaultValue, className }: { name: string; defaultValue?: string | null; className?: string }) {
   const [value, setValue] = useState(defaultValue ? [defaultValue] : []);
   return (
-    <div className={cn("max-w-[10rem]", className)}>
+    <div className={cn("max-w-40", className)}>
       <input type="hidden" name={name} value={value[0] ?? ""} />
       <ImageUploader value={value} onChange={setValue} max={1} />
     </div>
