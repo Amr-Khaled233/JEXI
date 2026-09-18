@@ -1,0 +1,312 @@
+// JEXI Accessories — data model
+//
+// Money convention: every monetary field is an Int in PIASTRES (1 EGP = 100).
+// Use the helpers in src/lib/money.ts to convert and format.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ─────────────────────────────────────────────────
+
+enum Color {
+  GOLD
+  SILVER
+  ROSE_GOLD
+}
+
+enum ProductTag {
+  BEST_SELLER
+  NEW
+  SALE
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  COD
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+enum PromoScope {
+  ALL
+  CATEGORY
+  PRODUCTS
+}
+
+enum AdminRole {
+  OWNER
+  STAFF
+}
+
+// ─── Catalog ───────────────────────────────────────────────
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products   Product[]   @relation("ProductCategories")
+  promoCodes PromoCode[] @relation("PromoCategories")
+}
+
+model Product {
+  id             String       @id @default(cuid())
+  name           String
+  slug           String       @unique
+  description    String       @default("")
+  sku            String       @unique
+  price          Int
+  compareAtPrice Int?
+  images         String[]
+  tags           ProductTag[]
+  published      Boolean      @default(false)
+  soldCount      Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  categories   Category[]    @relation("ProductCategories")
+  variants     Variant[]
+  giftBoxItems GiftBoxItem[]
+  orderItems   OrderItem[]
+  promoCodes   PromoCode[]   @relation("PromoProducts")
+
+  @@index([published, createdAt])
+}
+
+model Variant {
+  id        String  @id @default(cuid())
+  productId String
+  color     Color
+  sku       String? @unique
+  stock     Int     @default(0)
+
+  product      Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  giftBoxItems GiftBoxItem[]
+  orderItems   OrderItem[]
+
+  @@unique([productId, color])
+}
+
+model GiftBox {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String   @default("")
+  coverImage  String
+  price       Int
+  published   Boolean  @default(false)
+  soldCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items      GiftBoxItem[]
+  orderItems OrderItem[]
+}
+
+model GiftBoxItem {
+  id        String @id @default(cuid())
+  giftBoxId String
+  productId String
+  variantId String
+  quantity  Int    @default(1)
+
+  giftBox GiftBox @relation(fields: [giftBoxId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+}
+
+// ─── Promotions ────────────────────────────────────────────
+
+model PromoCode {
+  id               String       @id @default(cuid())
+  code             String       @unique // stored uppercase
+  description      String?
+  discountType     DiscountType
+  // PERCENTAGE: 1–100. FIXED: piastres.
+  value            Int
+  startsAt         DateTime
+  endsAt           DateTime
+  usageLimit       Int? // total redemptions; null = unlimited
+  perCustomerLimit Int? // per email/phone; null = unlimited
+  usedCount        Int          @default(0)
+  minOrderValue    Int? // piastres
+  scope            PromoScope   @default(ALL)
+  active           Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  categories Category[] @relation("PromoCategories")
+  products   Product[]  @relation("PromoProducts")
+  orders     Order[]
+}
+
+// ─── Shipping ──────────────────────────────────────────────
+
+model ShippingZone {
+  id                String  @id @default(cuid())
+  name              String  @unique // governorate name
+  enabled           Boolean @default(true)
+  fee               Int? // piastres; null = use the store default
+  estimatedDelivery String? // e.g. "2–4 business days"
+  sortOrder         Int     @default(0)
+}
+
+// ─── Orders ────────────────────────────────────────────────
+
+model Order {
+  id            String        @id @default(cuid())
+  orderNumber   String        @unique
+  // Random secret used in the confirmation link so order pages can't be enumerated.
+  accessToken   String        @unique
+  status        OrderStatus   @default(PENDING)
+  customerId    String?
+  customerName  String
+  email         String
+  phone         String
+  governorate   String
+  area          String
+  address       String
+  notes         String?
+  paymentMethod PaymentMethod @default(COD)
+  paymentStatus PaymentStatus @default(UNPAID)
+  subtotal      Int
+  discount      Int           @default(0)
+  shippingFee   Int           @default(0)
+  total         Int
+  promoCodeId   String?
+  promoCode     String? // snapshot of the code string
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  customer Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  promo    PromoCode?           @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
+  items    OrderItem[]
+  history  OrderStatusHistory[]
+
+  @@index([status, createdAt])
+  @@index([email])
+  @@index([phone])
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String?
+  variantId String?
+  giftBoxId String?
+  // Snapshots so the order stays readable if the catalog changes.
+  name      String
+  color     Color?
+  sku       String?
+  image     String?
+  unitPrice Int
+  quantity  Int
+  lineTotal Int
+  // Gift boxes: [{ name, color, quantity, productId, variantId }]
+  contents  Json?
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variant Variant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  giftBox GiftBox? @relation(fields: [giftBoxId], references: [id], onDelete: SetNull)
+}
+
+model OrderStatusHistory {
+  id               String      @id @default(cuid())
+  orderId          String
+  status           OrderStatus
+  note             String?
+  notifiedCustomer Boolean     @default(false)
+  createdAt        DateTime    @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+// ─── Customers ─────────────────────────────────────────────
+
+model Customer {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  addresses Address[]
+  orders    Order[]
+}
+
+model Address {
+  id          String   @id @default(cuid())
+  customerId  String
+  label       String? // "Home", "Work"
+  fullName    String
+  phone       String
+  governorate String
+  area        String
+  address     String
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+// ─── Admin & settings ──────────────────────────────────────
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         AdminRole @default(STAFF)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+model StoreSettings {
+  id                    Int     @id @default(1)
+  storeName             String  @default("JEXI Accessories")
+  tagline               String? @default("Timeless pieces for every day")
+  announcement          String? @default("Free shipping across Egypt")
+  contactEmail          String?
+  contactPhone          String?
+  whatsapp              String?
+  instagram             String?
+  // New-order alerts go here (falls back to ADMIN_NOTIFICATION_EMAIL, then GMAIL_USER).
+  notificationEmail     String?
+  freeShippingEnabled   Boolean @default(true)
+  // piastres; when set, orders at or above it ship free even to zones with a fee.
+  freeShippingThreshold Int?
+  // piastres; charged when free shipping is off and the zone has no fee override.
+  defaultShippingFee    Int     @default(0)
+  defaultTheme          String  @default("dark") // "dark" | "light" | "system"
+  lowStockThreshold     Int     @default(3)
+}
