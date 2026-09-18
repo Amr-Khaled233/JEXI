@@ -282,13 +282,31 @@ model Address {
 // ─── Admin & settings ──────────────────────────────────────
 
 model AdminUser {
-  id           String    @id @default(cuid())
-  name         String
-  email        String    @unique
-  passwordHash String
-  role         AdminRole @default(STAFF)
-  lastLoginAt  DateTime?
-  createdAt    DateTime  @default(now())
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  passwordHash   String
+  role           AdminRole @default(STAFF)
+  // Bumped on password change/reset; sessions signed with an older version are rejected.
+  sessionVersion Int       @default(0)
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+
+  passwordResets AdminPasswordReset[]
+}
+
+model AdminPasswordReset {
+  id        String    @id @default(cuid())
+  adminId   String
+  // SHA-256 of the token sent by email; the raw token is never stored.
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  admin AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
 }
 
 model StoreSettings {

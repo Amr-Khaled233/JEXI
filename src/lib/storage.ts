@@ -1,7 +1,8 @@
-// Image storage. The MVP writes to a local directory (UPLOAD_DIR, default ./uploads)
-// served by src/app/uploads/[...path]/route.ts. To move to S3/Cloudinary, replace
-// saveImage() so it uploads there and returns the public URL, then add that host to
-// images.remotePatterns in next.config.ts.
+// Image storage.
+// - Production (Vercel): when BLOB_READ_WRITE_TOKEN is set, the admin's browser uploads
+//   straight to Vercel Blob via src/app/api/admin/upload/blob/route.ts — this file isn't used.
+// - Local development: images are written to UPLOAD_DIR (default ./uploads) by
+//   src/app/api/admin/upload/route.ts and served by src/app/uploads/[...path]/route.ts.
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";

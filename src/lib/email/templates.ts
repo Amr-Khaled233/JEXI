@@ -175,6 +175,25 @@ export function customerConfirmationEmail(order: EmailOrder) {
   };
 }
 
+export function adminPasswordResetEmail(admin: { name: string; email: string }, link: string, ttlMinutes: number) {
+  const subject = "Reset your JEXI dashboard password";
+  const html = layout(
+    subject,
+    `Password reset requested for ${admin.email}`,
+    heading("Reset your password") +
+      paragraph(
+        `Someone asked to reset the dashboard password for <strong>${e(admin.name)}</strong> (${e(admin.email)}). Click below to choose a new password. The link works once and expires in ${ttlMinutes} minutes.`,
+      ) +
+      `<div style="text-align:center;margin:24px 0;">${button(link, "Choose a new password")}</div>` +
+      paragraph(`<span style="color:${MUTED};font-size:12px;">If you didn't request this, you can ignore this email — the password won't change.<br>Link: ${e(link)}</span>`),
+  );
+  return {
+    subject,
+    html,
+    text: `Password reset requested for ${admin.name} (${admin.email}).\n\nChoose a new password (expires in ${ttlMinutes} minutes, single use):\n${link}\n\nIf you didn't request this, ignore this email.`,
+  };
+}
+
 const STATUS_HEADLINES: Record<OrderStatusKey, string> = {
   PENDING: "We've received your order",
   CONFIRMED: "Your order is confirmed",

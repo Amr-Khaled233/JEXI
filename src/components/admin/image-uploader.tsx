@@ -5,7 +5,28 @@ import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ImagePlus, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const MAX_BYTES = 8 * 1024 * 1024;
+const ACCEPTED = ["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"];
+
 async function upload(files: FileList): Promise<string[]> {
+  for (const f of Array.from(files)) {
+    if (!ACCEPTED.includes(f.type)) throw new Error(`${f.name}: unsupported image type`);
+    if (f.size > MAX_BYTES) throw new Error(`${f.name}: images must be 8 MB or smaller`);
+  }
+
+  // Vercel Blob: upload directly from the browser using a token from our API.
+  if (process.env.NEXT_PUBLIC_BLOB_UPLOADS) {
+    const { upload: blobUpload } = await import("@vercel/blob/client");
+    const results = await Promise.all(
+      Array.from(files).map((f) => {
+        const safeName = f.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-").slice(-60);
+        return blobUpload(`jexi/products/${safeName}`, f, { access: "public", handleUploadUrl: "/api/admin/upload/blob", contentType: f.type });
+      }),
+    );
+    return results.map((r) => r.url);
+  }
+
+  // Local development: saved to UPLOAD_DIR by our API.
   const body = new FormData();
   for (const f of Array.from(files)) body.append("files", f);
   const res = await fetch("/api/admin/upload", { method: "POST", body });

@@ -21,8 +21,9 @@ function secretKey() {
   return new TextEncoder().encode(secret);
 }
 
-export async function signSession(kind: SessionKind, userId: string): Promise<string> {
-  return new SignJWT({ kind })
+/** `version` lets a password change/reset revoke every session signed before it. */
+export async function signSession(kind: SessionKind, userId: string, version = 0): Promise<string> {
+  return new SignJWT({ kind, v: version })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(userId)
     .setIssuedAt()
@@ -30,13 +31,17 @@ export async function signSession(kind: SessionKind, userId: string): Promise<st
     .sign(secretKey());
 }
 
-export async function verifySession(token: string | undefined, kind: SessionKind): Promise<string | null> {
+export async function verifySessionClaims(token: string | undefined, kind: SessionKind): Promise<{ userId: string; version: number } | null> {
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secretKey(), { algorithms: ["HS256"] });
     if (payload.kind !== kind || typeof payload.sub !== "string") return null;
-    return payload.sub;
+    return { userId: payload.sub, version: typeof payload.v === "number" ? payload.v : 0 };
   } catch {
     return null;
   }
+}
+
+export async function verifySession(token: string | undefined, kind: SessionKind): Promise<string | null> {
+  return (await verifySessionClaims(token, kind))?.userId ?? null;
 }

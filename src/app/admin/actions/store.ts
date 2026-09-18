@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
-import { hashPassword, requireAdmin, requireOwner, verifyPassword } from "@/lib/auth";
+import { hashPassword, requireAdmin, requireOwner, startSession, verifyPassword } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { parseMoneyInput, toMinor } from "@/lib/money";
 
@@ -206,6 +206,11 @@ export async function changePasswordAction(_prev: ActionResult, formData: FormDa
   if (next.length < 10) return { error: "New password must be at least 10 characters." };
   const admin = await db.adminUser.findUnique({ where: { id: me.id } });
   if (!admin || !(await verifyPassword(current, admin.passwordHash))) return { error: "Current password is incorrect." };
-  await db.adminUser.update({ where: { id: me.id }, data: { passwordHash: await hashPassword(next) } });
-  return { success: "Password updated." };
+  // Bumping the version signs out every other session; re-issue this one so you stay signed in.
+  const updated = await db.adminUser.update({
+    where: { id: me.id },
+    data: { passwordHash: await hashPassword(next), sessionVersion: { increment: 1 } },
+  });
+  await startSession("admin", me.id, updated.sessionVersion);
+  return { success: "Password updated. Other devices have been signed out." };
 }

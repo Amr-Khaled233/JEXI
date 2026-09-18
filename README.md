@@ -62,7 +62,8 @@ Running the seed again is safe. It never overwrites data that already exists.
 | `MAIL_FROM` | optional | "From" header. Default: `JEXI Accessories <GMAIL_USER>` |
 | `ADMIN_NOTIFICATION_EMAIL` | optional | Where new-order alerts go if no address is set in Admin → Settings. If this is also empty, alerts go to `GMAIL_USER` |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` | optional | Use an SMTP server other than Gmail. `GMAIL_USER` and `GMAIL_APP_PASSWORD` are then used as its login |
-| `UPLOAD_DIR` | optional | Folder for images uploaded in the admin. Default: `./uploads` |
+| `BLOB_READ_WRITE_TOKEN` | on Vercel | Added automatically when you connect a Vercel Blob store. When it's set, admin image uploads go to Blob |
+| `UPLOAD_DIR` | optional | Folder for uploaded images when Blob isn't set up (local development). Default: `./uploads` |
 | `POSTGRES_PORT` | optional | Host port that `docker compose` maps Postgres to |
 
 ### Setting up Gmail (App Password)
@@ -126,11 +127,15 @@ Cash on Delivery is the only method for now. `src/lib/payments/index.ts` defines
 - Admins and customers each have their own login cookie. It's a signed JWT (HS256, using `jose`) stored in an httpOnly cookie. Passwords are hashed with bcrypt.
 - `src/proxy.ts` sends signed-out visitors to the login page. Every admin page and server action also checks the session itself (`requireAdmin()`).
 - Admins have one of two roles: **Owner** (can add or remove admins) or **Staff**.
+- **Forgot password (admin):** the "Forgot password?" link on `/admin/login` emails a reset link to the **store's notification inbox**, not to the admin's own address. That inbox is the "New-order notification email" in Admin → Settings, falling back to `ADMIN_NOTIFICATION_EMAIL`, then `GMAIL_USER`. The link works once and expires after 30 minutes. Resetting or changing a password signs that admin out on every other device. This only works once Gmail is set up (section 3).
 - An order page can only be opened in two ways: with the secret link sent at checkout and in emails, or through **Track Order** (order number plus the email or phone used). Registered customers also see their orders under **My account**.
 - Login and order tracking are rate-limited in memory, per server instance.
 
 ### Images
-Images uploaded in the admin are saved to `UPLOAD_DIR` and served from `/uploads/...`. To use S3 or Cloudinary instead, change `saveImage()` in `src/lib/storage.ts` and add the new host to `images.remotePatterns` in `next.config.ts`. The sample product images come from `scripts/generate-samples.mjs`. Replace them with real photos from the admin.
+- **On Vercel (with a Blob store connected):** the admin's browser uploads images straight to **Vercel Blob**. Our server only hands out a short-lived upload token, and only to a signed-in admin (`src/app/api/admin/upload/blob/route.ts`). Uploading directly avoids Vercel's 4.5 MB request limit. Images can be up to 8 MB.
+- **Locally (no `BLOB_READ_WRITE_TOKEN`):** images are saved to `UPLOAD_DIR` and served from `/uploads/...`.
+
+The sample product images come from `scripts/generate-samples.mjs`. Replace them with real photos from the admin.
 
 ## 5. Scripts
 
@@ -144,14 +149,29 @@ Images uploaded in the admin are saved to `UPLOAD_DIR` and served from `/uploads
 | `npm run db:seed` | Load the starter data |
 | `npm run db:studio` | Open Prisma Studio to browse the data |
 
-## 6. Deploying
+## 6. Deploying to Vercel
 
-1. Create a Postgres database (Neon, Supabase, Railway, RDS, …) and set `DATABASE_URL`.
-2. Set `SESSION_SECRET`, `APP_URL` and the Gmail variables.
-3. Build and migrate: `npm ci && npx prisma migrate deploy && npm run build`. Run `npm run db:seed` once on a fresh database.
-4. Start the server with `npm start`.
+1. **Import the project:** on vercel.com, go to Add New → Project, import this GitHub repo, and don't deploy yet.
+2. **Database:** in the project, open Storage → Create → **Neon (Postgres)** and connect it. This adds `DATABASE_URL`.
+3. **Images:** Storage → Create → **Blob**, then connect it. This adds `BLOB_READ_WRITE_TOKEN`.
+4. **Environment variables** (Settings → Environment Variables):
+   - `SESSION_SECRET`: a new random value, not the one from your local `.env`
+   - `APP_URL`: e.g. `https://jexi.vercel.app`
+   - `GMAIL_USER` and `GMAIL_APP_PASSWORD`
+   - `ADMIN_NOTIFICATION_EMAIL`: the Gmail that should receive order alerts and password-reset links
+5. **Create the tables and starter data** from your own computer. Use Neon's *direct* (unpooled) connection string. In PowerShell:
+   ```powershell
+   $env:DATABASE_URL="postgresql://…neon.tech/neondb?sslmode=require"
+   $env:ADMIN_EMAIL="you@example.com"; $env:ADMIN_PASSWORD="a-strong-password"
+   npx prisma migrate deploy
+   npm run db:seed
+   ```
+   Environment variables set in the shell take priority over `.env`, so your local database isn't touched. Re-run `npx prisma migrate deploy` the same way whenever the schema changes.
+6. **Deploy.** From then on, every push to `main` deploys automatically.
 
-**Uploads on Vercel and similar hosts:** these platforms don't keep files saved to disk, so uploaded images would be lost. Either switch `saveImage()` to S3 or Cloudinary first, or deploy to a server with a persistent disk (a VPS, Railway or Render with a volume) and point `UPLOAD_DIR` at that disk.
+> Blob needs to be connected **before** the build runs, because the build checks whether it's there. If you connect Blob after deploying, click **Redeploy**.
+
+**Other hosts:** run `npm ci && npx prisma migrate deploy && npm run build && npm start`. Without Blob, uploads are saved to `UPLOAD_DIR`, so the server needs a persistent disk (a VPS, or Railway or Render with a volume).
 
 ## 7. Project structure
 
