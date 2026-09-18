@@ -10,12 +10,12 @@ import { Alert, Field, Input } from "@/components/ui/field";
 export function ForgotPasswordForm() {
   const [state, action, pending] = useActionState(requestAdminPasswordResetAction, undefined);
 
-  if (state?.sentTo) {
+  if (state?.sent) {
     return (
       <div className="space-y-4 text-center">
         <MailCheck className="mx-auto size-10 text-gold" strokeWidth={1.2} />
         <p className="text-sm leading-relaxed">
-          If that email belongs to an admin account, a reset link was sent to the store&apos;s notification inbox <strong>{state.sentTo}</strong>. It expires in 30 minutes.
+          If that email belongs to an admin account, we&apos;ve sent it a link to choose a new password. The link expires in 30 minutes.
         </p>
         <p className="text-xs text-muted">Don&apos;t see it? Check the spam folder.</p>
         <Link href="/admin/login" className="inline-block text-sm text-gold underline underline-offset-4">

@@ -5,11 +5,10 @@ import { Check } from "lucide-react";
 import { ColorSwatch } from "@/components/color-swatch";
 import { QuantityStepper } from "@/components/store/cart-parts";
 import { Button } from "@/components/ui/button";
-import { COLORS, type ColorKey } from "@/lib/constants";
 import { useCart } from "@/lib/cart-store";
 import { cn } from "@/lib/utils";
 
-type Variant = { id: string; color: ColorKey; stock: number };
+type Variant = { id: string; color: { name: string; hex: string }; stock: number };
 
 export function AddToCart({ variants, lowStockThreshold }: { variants: Variant[]; lowStockThreshold: number }) {
   const add = useCart((s) => s.add);
@@ -24,7 +23,7 @@ export function AddToCart({ variants, lowStockThreshold }: { variants: Variant[]
     <div className="space-y-6">
       <fieldset>
         <legend className="mb-3 text-[0.68rem] tracking-[0.24em] text-muted uppercase">
-          Color: <span className="text-fg">{variant ? COLORS[variant.color].label : "—"}</span>
+          Color: <span className="text-fg">{variant ? variant.color.name : ""}</span>
         </legend>
         <div className="flex flex-wrap gap-2.5">
           {variants.map((v) => (
@@ -42,13 +41,13 @@ export function AddToCart({ variants, lowStockThreshold }: { variants: Variant[]
                 v.stock <= 0 && "text-muted line-through decoration-muted/60",
               )}
             >
-              <ColorSwatch color={v.color} className="size-4" />
-              {COLORS[v.color].label}
+              <ColorSwatch hex={v.color.hex} className="size-4" />
+              {v.color.name}
             </button>
           ))}
         </div>
         {variant && variant.stock > 0 && variant.stock <= lowStockThreshold && (
-          <p className="mt-3 text-xs text-warning">Only {variant.stock} left in {COLORS[variant.color].label.toLowerCase()}</p>
+          <p className="mt-3 text-xs text-warning">Only {variant.stock} left in {variant.color.name.toLowerCase()}</p>
         )}
       </fieldset>
 

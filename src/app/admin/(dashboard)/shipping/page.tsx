@@ -1,11 +1,13 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { setAllShippingZonesAction } from "@/app/admin/actions/store";
 import { ShippingZoneRow } from "@/components/admin/shipping-zone-row";
-import { PageTitle } from "@/components/admin/ui";
+import { PageTitle, Table } from "@/components/admin/ui";
 import { Alert } from "@/components/ui/field";
 import { db } from "@/lib/db";
 import { formatMoney, fromMinor } from "@/lib/money";
 import { getSettings } from "@/lib/settings";
+import { freeShippingOffer } from "@/lib/shipping";
 
 export const metadata: Metadata = { title: "Shipping Zones" };
 
@@ -17,10 +19,12 @@ export default async function ShippingPage() {
     <>
       <PageTitle title="Shipping Zones" description={`${enabled} of ${zones.length} governorates are visible at checkout.`} />
       <Alert tone="info" className="mb-6">
-        {settings.freeShippingEnabled
-          ? "Free shipping is on. A zone only charges if you set a fee for it below"
-          : `Free shipping is off. Zones without a fee charge the default ${formatMoney(settings.defaultShippingFee)}`}
-        {settings.freeShippingThreshold != null && `, and orders over ${formatMoney(settings.freeShippingThreshold)} always ship free`}. Change this in Settings.
+        {freeShippingOffer(settings).active ? "A free-shipping offer is running, so qualifying orders ship free everywhere. " : ""}
+        Each governorate charges the fee set below, or the default of {formatMoney(settings.defaultShippingFee)} when it&apos;s left blank. Manage free shipping and the default fee in the{" "}
+        <Link href="/admin/free-shipping" className="underline underline-offset-2">
+          Free Shipping
+        </Link>{" "}
+        tab.
       </Alert>
 
       <div className="mb-4 flex gap-2">
@@ -34,21 +38,25 @@ export default async function ShippingPage() {
         ))}
       </div>
 
-      <div className="card divide-y divide-border">
-        <div className="hidden grid-cols-[minmax(0,1fr)_7rem_10rem_12rem_5rem] gap-3 px-4 py-3 text-[0.65rem] tracking-[0.16em] text-muted uppercase md:grid">
-          <span>Governorate</span>
-          <span>Visible</span>
-          <span>Fee (EGP)</span>
-          <span>Estimated delivery</span>
-          <span />
-        </div>
-        {zones.map((z) => (
-          <ShippingZoneRow
-            key={z.id}
-            zone={{ id: z.id, name: z.name, enabled: z.enabled, fee: z.fee != null ? String(fromMinor(z.fee)) : "", estimatedDelivery: z.estimatedDelivery ?? "" }}
-          />
-        ))}
-      </div>
+      <Table>
+        <thead>
+          <tr>
+            <th>Governorate</th>
+            <th className="w-24">Visible</th>
+            <th className="w-40">Fee (EGP)</th>
+            <th>Estimated delivery</th>
+            <th className="w-36" aria-label="Save" />
+          </tr>
+        </thead>
+        <tbody>
+          {zones.map((z) => (
+            <ShippingZoneRow
+              key={z.id}
+              zone={{ id: z.id, name: z.name, enabled: z.enabled, fee: z.fee != null ? String(fromMinor(z.fee)) : "", estimatedDelivery: z.estimatedDelivery ?? "" }}
+            />
+          ))}
+        </tbody>
+      </Table>
     </>
   );
 }

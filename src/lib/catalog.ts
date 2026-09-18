@@ -1,6 +1,6 @@
 import { cache } from "react";
 import type { Prisma } from "@/generated/prisma/client";
-import { COLOR_KEYS, PRODUCTS_PER_PAGE, TAG_KEYS, type ColorKey, type TagKey } from "@/lib/constants";
+import { PRODUCTS_PER_PAGE, TAG_KEYS, type TagKey } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { toMinor } from "@/lib/money";
 
@@ -13,7 +13,7 @@ export const productCardSelect = {
   images: true,
   tags: true,
   createdAt: true,
-  variants: { select: { id: true, color: true, stock: true }, orderBy: { color: "asc" } },
+  variants: { select: { id: true, stock: true, color: { select: { id: true, name: true, slug: true, hex: true } } }, orderBy: { color: { sortOrder: "asc" } } },
 } satisfies Prisma.ProductSelect;
 
 export type ProductCardData = Prisma.ProductGetPayload<{ select: typeof productCardSelect }>;
@@ -35,7 +35,8 @@ export type SortKey = keyof typeof SORTS;
 
 export type ProductFilters = {
   categories: string[];
-  colors: ColorKey[];
+  /** Color slugs, e.g. ["gold", "rose-gold"]. */
+  colors: string[];
   tags: TagKey[];
   min: number | null; // EGP
   max: number | null; // EGP
@@ -62,7 +63,7 @@ export function parseFilters(sp: SearchParams): ProductFilters {
   const sort = (Array.isArray(sp.sort) ? sp.sort[0] : sp.sort) as SortKey;
   return {
     categories: list(sp.category),
-    colors: list(sp.color).filter((c): c is ColorKey => (COLOR_KEYS as string[]).includes(c)),
+    colors: list(sp.color).slice(0, 20),
     tags: list(sp.tag).filter((t): t is TagKey => (TAG_KEYS as string[]).includes(t)),
     min: num(sp.min),
     max: num(sp.max),
@@ -77,7 +78,7 @@ export async function getProducts(filters: ProductFilters) {
   const and: Prisma.ProductWhereInput[] = [];
 
   if (filters.categories.length) and.push({ categories: { some: { slug: { in: filters.categories } } } });
-  if (filters.colors.length) and.push({ variants: { some: { color: { in: filters.colors } } } });
+  if (filters.colors.length) and.push({ variants: { some: { color: { slug: { in: filters.colors } } } } });
   if (filters.tags.length) and.push({ tags: { hasSome: filters.tags } });
   if (filters.min != null) and.push({ price: { gte: toMinor(filters.min) } });
   if (filters.max != null) and.push({ price: { lte: toMinor(filters.max) } });
@@ -86,7 +87,6 @@ export async function getProducts(filters: ProductFilters) {
       OR: [
         { name: { contains: filters.q, mode: "insensitive" } },
         { description: { contains: filters.q, mode: "insensitive" } },
-        { sku: { contains: filters.q, mode: "insensitive" } },
       ],
     });
   }
@@ -128,7 +128,7 @@ export const getProductBySlug = cache(async (slug: string) =>
     where: { slug, published: true },
     include: {
       categories: { select: { id: true, name: true, slug: true } },
-      variants: { orderBy: { color: "asc" } },
+      variants: { include: { color: true }, orderBy: { color: { sortOrder: "asc" } } },
     },
   }),
 );
@@ -156,7 +156,7 @@ const giftBoxInclude = {
   items: {
     include: {
       product: { select: { id: true, name: true, slug: true, price: true, images: true, published: true } },
-      variant: { select: { id: true, color: true, stock: true } },
+      variant: { select: { id: true, stock: true, color: { select: { name: true, hex: true } } } },
     },
   },
 } satisfies Prisma.GiftBoxInclude;
@@ -176,4 +176,8 @@ export async function getGiftBoxes(take?: number) {
 
 export const getGiftBoxBySlug = cache(async (slug: string) =>
   db.giftBox.findFirst({ where: { slug, published: true }, include: giftBoxInclude }),
+);
+
+export const getAllColors = cache(async () =>
+  db.color.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true, slug: true, hex: true } }),
 );

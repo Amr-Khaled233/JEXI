@@ -98,41 +98,48 @@ The browser only stores which items are in the cart and their quantities (in loc
 If any step fails, nothing is saved. Emails are sent after the response, using `after()`, so checkout stays fast.
 
 ### Order statuses
-`Pending → Confirmed → Processing → Shipped → Delivered`, or `Cancelled`.
+`Pending → Shipped → Delivered`, or `Cancelled`. The customer sees these as a progress line on their order page and on Track Order.
 
 - Every change is saved to the order's timeline, which both the admin and the customer can see.
 - When the admin changes a status, the customer is emailed unless "Email the customer" is unticked.
 - **Cancelling** puts the items back in stock and gives back the promo-code use. A cancelled order can't be changed again.
 - Marking a Cash on Delivery order **Delivered** also marks it as paid.
+- **Deleting** an order removes it permanently. If it was still Pending or Shipped, its items go back into stock first.
+- On the Orders page, click any row to open the order window. From there you can change the status, or open the full order with **Edit order**.
 
 ### Promo codes
 - A code can be a percentage or a fixed amount. It has a start date, an end date, an optional total usage limit, an optional per-customer limit (matched by email or phone), and an optional minimum order.
-- It can apply to the whole order, to certain categories, or to certain products. Gift boxes only get discounted by whole-order codes.
+- A code always applies to the whole order, including gift boxes.
 - There's no scheduled job. A code simply stops working after its end date or once it reaches its usage limit. The dashboard shows each code's status and its usage (e.g. "34/100").
 
-### Shipping
-Rules, in order:
+### Shipping and free shipping
+Free shipping is managed in its own **Free Shipping** tab:
 
-1. If a governorate has its own fee set (above 0), that fee is charged.
-2. Otherwise, shipping is free if **Free shipping** is on in Settings (the default).
-3. Otherwise, the store's **default shipping fee** is charged.
-4. If a **free-shipping threshold** is set, orders at or above it (after discount) ship free.
+- Turn it on or off.
+- Optionally limit it to a date range (start and/or end).
+- Optionally apply it only to orders over a minimum amount (after any promo discount).
 
-Governorates switched off in **Shipping Zones** don't appear at checkout.
+When an order doesn't get free shipping, it pays its governorate's fee from **Shipping Zones**, or the regular fee set in the Free Shipping tab if the governorate has none. Governorates switched off in Shipping Zones don't appear at checkout.
+
+### Products, colors and categories
+- A product has a **Price** and an optional **Sale price**. When a sale price is set, customers pay it, the regular price is shown struck through, and the Sale badge is added automatically.
+- Colors are managed in **Categories & Colors** (name plus a color picker), and can also be added while editing a product. A color can only be deleted once no product uses it.
+- Web addresses (URL slugs) are created automatically from names and never need editing.
+- Social links (Instagram, Facebook, TikTok) are set in **Settings**, each with its own "Show in footer" switch.
 
 ### Payments
 Cash on Delivery is the only method for now. `src/lib/payments/index.ts` defines a `PaymentProvider` interface, and the comments at the top of that file explain how to add a card gateway such as Paymob, Fawry or Stripe.
 
 ### Customers and order tracking
-Customers don't need an account or password. Every order has a private link, which is shown after checkout and included in every email. On **Track Order** (`/track`), the customer only enters their email. We then **email** them a list of their recent orders, each with its private link.
+Customers don't need an account or password. On **Track Order** (`/track`), a customer enters their email and sees their orders with each order's status line.
 
-The orders are emailed rather than shown on screen on purpose. Otherwise anyone who typed a customer's email would see that customer's address and phone number. The page gives the same response whether or not that email has orders, so it also can't be used to find out who has ordered.
+To protect privacy, the tracking results only show the order number, date, items, total and status, never the customer's name, address or phone. Searches are rate-limited to stop mass lookups. Every order also has a private link with the full details, which is shown after checkout and included in every email.
 
 ### Admin accounts
 - Admin sessions use a signed JWT (HS256, using `jose`) in an httpOnly, SameSite cookie that lasts 12 hours. Passwords are hashed with bcrypt.
 - `src/proxy.ts` sends signed-out visitors to the login page. Every admin page and server action also checks the session itself (`requireAdmin()`).
-- Admins have one of two roles: **Owner** or **Staff**. Only the Owner can add or remove admins or change the notification email.
-- **Forgot password:** the "Forgot password?" link on `/admin/login` emails a reset link to the **store's notification inbox**, not to the admin's own address. That inbox is the "New-order notification email" in Admin → Settings, falling back to `ADMIN_NOTIFICATION_EMAIL`, then `GMAIL_USER`. The link works once and expires after 30 minutes. Resetting or changing a password signs that admin out on every other device. This only works once Gmail is set up (section 3).
+- Admins have one of two roles: **Owner** or **Staff**. Only the Owner can add or remove admins or change where new-order alerts are sent.
+- **Forgot password:** the "Forgot password?" link on `/admin/login` emails a reset link to **that admin's own email address**, so each admin should sign in with a real inbox (for example a Gmail address). The link works once and expires after 30 minutes. Resetting a password signs that admin out on every other device. This only works once Gmail sending is set up (section 3).
 
 ### Security measures
 - **Prices and discounts** are always recalculated on the server. Prices sent from the browser are ignored.

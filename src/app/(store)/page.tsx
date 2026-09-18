@@ -6,14 +6,18 @@ import { SectionHeading } from "@/components/store/section-heading";
 import { buttonClasses } from "@/components/ui/button";
 import { getGiftBoxes, getNavCategories, getTaggedProducts, giftBoxValue } from "@/lib/catalog";
 import { formatMoney } from "@/lib/money";
+import { getSettings } from "@/lib/settings";
+import { freeShippingOffer } from "@/lib/shipping";
 
 export default async function HomePage() {
-  const [bestSellers, newArrivals, giftBoxes, categories] = await Promise.all([
+  const [bestSellers, newArrivals, giftBoxes, categories, settings] = await Promise.all([
     getTaggedProducts("BEST_SELLER", 8),
     getTaggedProducts("NEW", 8),
     getGiftBoxes(2),
     getNavCategories(),
+    getSettings(),
   ]);
+  const offer = freeShippingOffer(settings);
   const featuredBox = giftBoxes[0];
 
   return (
@@ -99,7 +103,9 @@ export default async function HomePage() {
       {/* Promises */}
       <section className="container-page mt-12 grid grid-cols-2 gap-8 border-y border-border py-12 md:grid-cols-4">
         {[
-          { icon: Truck, title: "Free shipping", text: "Delivered across Egypt" },
+          offer.active
+            ? { icon: Truck, title: "Free shipping", text: offer.minimum ? `On orders over ${formatMoney(offer.minimum)}` : "Delivered across Egypt" }
+            : { icon: Truck, title: "Fast delivery", text: "Across Egypt" },
           { icon: ShieldCheck, title: "Cash on delivery", text: "Pay when it arrives" },
           { icon: Gift, title: "Gift ready", text: "Signature JEXI packaging" },
           { icon: RotateCcw, title: "Easy support", text: "We're a message away" },

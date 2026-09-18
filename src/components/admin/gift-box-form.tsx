@@ -7,17 +7,14 @@ import { ImageUploader } from "@/components/admin/image-uploader";
 import { Panel } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { Alert, Checkbox, Field, Input, Select, Textarea } from "@/components/ui/field";
-import { COLORS, type ColorKey } from "@/lib/constants";
 import { formatMoney, toMinor } from "@/lib/money";
-import { slugify } from "@/lib/utils";
 
-type ProductOption = { id: string; name: string; price: number; variants: { id: string; color: ColorKey; stock: number }[] };
+type ProductOption = { id: string; name: string; price: number; variants: { id: string; stock: number; color: { name: string; hex: string } }[] };
 type Item = { productId: string; variantId: string; quantity: number };
 
 export type GiftBoxFormValues = {
   id?: string;
   name: string;
-  slug: string;
   description: string;
   coverImage: string;
   price: string;
@@ -27,7 +24,6 @@ export type GiftBoxFormValues = {
 
 export function GiftBoxForm({ initial, products }: { initial: GiftBoxFormValues; products: ProductOption[] }) {
   const [v, setV] = useState(initial);
-  const [slugTouched, setSlugTouched] = useState(!!initial.id);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [deleting, startDelete] = useTransition();
@@ -54,7 +50,6 @@ export function GiftBoxForm({ initial, products }: { initial: GiftBoxFormValues;
     startTransition(async () => {
       const res = await saveGiftBoxAction(v.id ?? null, {
         name: v.name,
-        slug: v.slug,
         description: v.description,
         coverImage: v.coverImage,
         price: Number(v.price),
@@ -73,29 +68,11 @@ export function GiftBoxForm({ initial, products }: { initial: GiftBoxFormValues;
       <div className="space-y-6">
         {error && <Alert tone="error">{error}</Alert>}
         <Panel title="Details">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4">
             <Field label="Name" htmlFor="name">
-              <Input
-                id="name"
-                required
-                value={v.name}
-                onChange={(e) => {
-                  set("name", e.target.value);
-                  if (!slugTouched) set("slug", slugify(e.target.value));
-                }}
-              />
+              <Input id="name" required value={v.name} onChange={(e) => set("name", e.target.value)} />
             </Field>
-            <Field label="URL slug" htmlFor="slug" hint={`/gift-boxes/${v.slug || "…"}`}>
-              <Input
-                id="slug"
-                value={v.slug}
-                onChange={(e) => {
-                  setSlugTouched(true);
-                  set("slug", e.target.value);
-                }}
-              />
-            </Field>
-            <Field label="Description" htmlFor="description" className="sm:col-span-2">
+            <Field label="Description" htmlFor="description">
               <Textarea id="description" rows={4} value={v.description} onChange={(e) => set("description", e.target.value)} />
             </Field>
           </div>
@@ -129,14 +106,14 @@ export function GiftBoxForm({ initial, products }: { initial: GiftBoxFormValues;
                     </option>
                     {products.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.name}, {formatMoney(p.price)}
+                        {p.name} (EGP {(p.price / 100).toLocaleString("en-US")})
                       </option>
                     ))}
                   </Select>
                   <Select aria-label="Color" value={it.variantId} onChange={(e) => setItem(i, { variantId: e.target.value })} className="h-10" disabled={!product}>
                     {product?.variants.map((x) => (
                       <option key={x.id} value={x.id}>
-                        {COLORS[x.color].label} ({x.stock})
+                        {x.color.name} ({x.stock} in stock)
                       </option>
                     ))}
                   </Select>

@@ -17,9 +17,6 @@ export type PromoFormValues = {
   usageLimit: string;
   perCustomerLimit: string;
   minOrderValue: string;
-  scope: "ALL" | "CATEGORY" | "PRODUCTS";
-  categoryIds: string[];
-  productIds: string[];
   active: boolean;
   usedCount?: number;
 };
@@ -31,22 +28,12 @@ function toLocalInput(iso: string) {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 }
 
-export function PromoForm({
-  initial,
-  categories,
-  products,
-}: {
-  initial: PromoFormValues;
-  categories: { id: string; name: string }[];
-  products: { id: string; name: string }[];
-}) {
+export function PromoForm({ initial }: { initial: PromoFormValues }) {
   const [v, setV] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [deleting, startDelete] = useTransition();
   const set = <K extends keyof PromoFormValues>(k: K, val: PromoFormValues[K]) => setV((s) => ({ ...s, [k]: val }));
-  const toggle = (key: "categoryIds" | "productIds", id: string) =>
-    set(key, v[key].includes(id) ? v[key].filter((x) => x !== id) : [...v[key], id]);
   const intOrNull = (s: string) => (s.trim() ? Math.floor(Number(s)) : null);
 
   const submit = (e: React.FormEvent) => {
@@ -63,9 +50,6 @@ export function PromoForm({
         usageLimit: intOrNull(v.usageLimit),
         perCustomerLimit: intOrNull(v.perCustomerLimit),
         minOrderValue: v.minOrderValue.trim() ? Number(v.minOrderValue) : null,
-        scope: v.scope,
-        categoryIds: v.categoryIds,
-        productIds: v.productIds,
         active: v.active,
       });
       if (res?.error) {
@@ -110,30 +94,6 @@ export function PromoForm({
           </div>
         </Panel>
 
-        <Panel title="Applies to">
-          <div className="flex flex-wrap gap-4">
-            {(["ALL", "CATEGORY", "PRODUCTS"] as const).map((s) => (
-              <label key={s} className="inline-flex cursor-pointer items-center gap-2 text-sm">
-                <input type="radio" name="scope" checked={v.scope === s} onChange={() => set("scope", s)} className="accent-gold" />
-                {s === "ALL" ? "Entire order (incl. gift boxes)" : s === "CATEGORY" ? "Specific categories" : "Specific products"}
-              </label>
-            ))}
-          </div>
-          {v.scope === "CATEGORY" && (
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {categories.map((c) => (
-                <Checkbox key={c.id} checked={v.categoryIds.includes(c.id)} onChange={() => toggle("categoryIds", c.id)} label={c.name} />
-              ))}
-            </div>
-          )}
-          {v.scope === "PRODUCTS" && (
-            <div className="mt-4 grid max-h-72 gap-2 overflow-y-auto sm:grid-cols-2">
-              {products.map((p) => (
-                <Checkbox key={p.id} checked={v.productIds.includes(p.id)} onChange={() => toggle("productIds", p.id)} label={p.name} />
-              ))}
-            </div>
-          )}
-        </Panel>
       </div>
 
       <div className="space-y-6">

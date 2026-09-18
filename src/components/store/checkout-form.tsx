@@ -10,7 +10,6 @@ import { OrderTotals, PromoCodeInput } from "@/components/store/cart-parts";
 import { useCartQuote } from "@/components/store/use-cart-quote";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Alert, Field, Input, Select, Textarea } from "@/components/ui/field";
-import { COLORS } from "@/lib/constants";
 import { useCart } from "@/lib/cart-store";
 import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/utils";
@@ -186,7 +185,7 @@ export function CheckoutForm({ zones, paymentMethods }: { zones: Zone[]; payment
                   </div>
                   <div className="min-w-0 flex-1 text-sm">
                     <p className="truncate font-medium">{l.name || "Unavailable item"}</p>
-                    {l.color && <p className="text-xs text-muted">{COLORS[l.color].label}</p>}
+                    {l.colorName && <p className="text-xs text-muted">{l.colorName}</p>}
                     {l.kind === "giftbox" && <p className="text-xs text-gold">Gift Box</p>}
                     {l.issue && <p className="text-xs text-danger">{l.issue}</p>}
                   </div>

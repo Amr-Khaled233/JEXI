@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { FilterPanel, MobileFilters, SortSelect } from "@/components/store/filters";
 import { ProductGrid } from "@/components/store/product-card";
-import { getProducts, type ProductFilters } from "@/lib/catalog";
+import { getAllColors, getProducts, type ProductFilters } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 
 export async function ProductListing({
@@ -17,7 +17,7 @@ export async function ProductListing({
   /** Pass to show the category filter (Shop All). */
   categories?: { slug: string; name: string }[];
 }) {
-  const { products, total, pages } = await getProducts(filters);
+  const [{ products, total, pages }, colors] = await Promise.all([getProducts(filters), getAllColors()]);
 
   const pageHref = (page: number) => {
     const p = new URLSearchParams();
@@ -31,7 +31,7 @@ export async function ProductListing({
       <aside className="hidden lg:block">
         <div className="sticky top-36">
           <Suspense>
-            <FilterPanel categories={categories} />
+            <FilterPanel categories={categories} colors={colors} />
           </Suspense>
         </div>
       </aside>
@@ -39,7 +39,7 @@ export async function ProductListing({
         <div className="mb-6 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Suspense>
-              <MobileFilters categories={categories} />
+              <MobileFilters categories={categories} colors={colors} />
             </Suspense>
             <p className="text-xs tracking-[0.14em] text-muted uppercase">
               {total} {total === 1 ? "piece" : "pieces"}

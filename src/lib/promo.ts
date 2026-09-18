@@ -29,13 +29,6 @@ export function promoStatus(
   return "ACTIVE";
 }
 
-export type PromoLine = {
-  kind: "product" | "giftbox";
-  productId?: string;
-  categoryIds: string[];
-  lineTotal: number;
-};
-
 export type PromoResult = {
   code: string;
   applied: boolean;
@@ -44,31 +37,13 @@ export type PromoResult = {
   promoId?: string;
 };
 
-type PromoWithScope = Prisma.PromoCodeGetPayload<{ include: { categories: { select: { id: true } }; products: { select: { id: true } } } }>;
-
-export function calculateDiscount(promo: PromoWithScope, lines: PromoLine[]) {
-  const categoryIds = new Set(promo.categories.map((c) => c.id));
-  const productIds = new Set(promo.products.map((p) => p.id));
-
-  const eligible = lines.filter((line) => {
-    if (promo.scope === "ALL") return true;
-    if (line.kind !== "product") return false; // scoped codes apply to individual pieces only
-    if (promo.scope === "CATEGORY") return line.categoryIds.some((id) => categoryIds.has(id));
-    return line.productId != null && productIds.has(line.productId);
-  });
-  const eligibleSubtotal = eligible.reduce((sum, l) => sum + l.lineTotal, 0);
-
-  const discount =
-    promo.discountType === "PERCENTAGE"
-      ? Math.round((eligibleSubtotal * Math.min(promo.value, 100)) / 100)
-      : Math.min(promo.value, eligibleSubtotal);
-
-  return { eligibleSubtotal, discount };
+/** Promo codes always apply to the whole order (products and gift boxes). */
+export function calculateDiscount(promo: { discountType: "PERCENTAGE" | "FIXED"; value: number }, subtotal: number) {
+  return promo.discountType === "PERCENTAGE" ? Math.round((subtotal * Math.min(promo.value, 100)) / 100) : Math.min(promo.value, subtotal);
 }
 
 export async function evaluatePromo(
   rawCode: string,
-  lines: PromoLine[],
   subtotal: number,
   customer?: { email?: string | null; phone?: string | null },
   client: DbClient = db,
@@ -77,10 +52,7 @@ export async function evaluatePromo(
   const fail = (message: string): PromoResult => ({ code, applied: false, discount: 0, message });
   if (!code) return fail("Enter a promo code.");
 
-  const promo = await client.promoCode.findUnique({
-    where: { code },
-    include: { categories: { select: { id: true } }, products: { select: { id: true } } },
-  });
+  const promo = await client.promoCode.findUnique({ where: { code } });
   if (!promo) return fail("This promo code doesn't exist.");
 
   switch (promoStatus(promo)) {
@@ -111,10 +83,9 @@ export async function evaluatePromo(
     if (used >= promo.perCustomerLimit) return fail("You've already used this promo code the maximum number of times.");
   }
 
-  const { eligibleSubtotal, discount } = calculateDiscount(promo, lines);
-  if (eligibleSubtotal === 0 || discount === 0) return fail("This code doesn't apply to the items in your cart.");
+  const discount = calculateDiscount(promo, subtotal);
+  if (discount === 0) return fail("Add items to your cart to use this code.");
 
   const what = promo.discountType === "PERCENTAGE" ? `${promo.value}% off` : `${formatMoney(promo.value)} off`;
-  const scope = promo.scope === "ALL" ? "" : " eligible items";
-  return { code, applied: true, discount, promoId: promo.id, message: `${what}${scope} applied.` };
+  return { code, applied: true, discount, promoId: promo.id, message: `${what} applied.` };
 }

@@ -95,8 +95,7 @@ export async function placeOrder(input: PlaceOrderInput) {
                 variantId: l.variantId ?? null,
                 giftBoxId: l.giftBoxId ?? null,
                 name: l.name,
-                color: l.color,
-                sku: l.sku,
+                colorName: l.colorName,
                 image: l.image,
                 unitPrice: l.unitPrice,
                 quantity: l.quantity,
@@ -125,6 +124,34 @@ export async function placeOrder(input: PlaceOrderInput) {
   throw new OrderError("We couldn't place your order. Please try again.");
 }
 
+type Tx = Prisma.TransactionClient;
+type OrderWithItems = Prisma.OrderGetPayload<{ include: { items: true } }>;
+
+/** Put an order's items back in stock and give back its promo-code use. */
+async function releaseOrder(tx: Tx, order: OrderWithItems) {
+  for (const item of order.items) {
+    if (item.variantId) {
+      await tx.variant.updateMany({ where: { id: item.variantId }, data: { stock: { increment: item.quantity } } });
+    }
+    if (Array.isArray(item.contents)) {
+      for (const c of item.contents as { variantId?: string; quantity?: number }[]) {
+        if (c.variantId) {
+          await tx.variant.updateMany({ where: { id: c.variantId }, data: { stock: { increment: (c.quantity ?? 1) * item.quantity } } });
+        }
+      }
+    }
+    if (item.productId) {
+      await tx.product.updateMany({ where: { id: item.productId, soldCount: { gte: item.quantity } }, data: { soldCount: { decrement: item.quantity } } });
+    }
+    if (item.giftBoxId) {
+      await tx.giftBox.updateMany({ where: { id: item.giftBoxId, soldCount: { gte: item.quantity } }, data: { soldCount: { decrement: item.quantity } } });
+    }
+  }
+  if (order.promoCodeId) {
+    await tx.promoCode.updateMany({ where: { id: order.promoCodeId, usedCount: { gt: 0 } }, data: { usedCount: { decrement: 1 } } });
+  }
+}
+
 /**
  * Change an order's status and record it in the timeline. Cancelling restocks
  * the items and releases the promo-code redemption. Cancelled is final.
@@ -136,38 +163,7 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus, no
     if (order.status === status) throw new OrderError("The order already has this status.");
     if (order.status === "CANCELLED") throw new OrderError("Cancelled orders can't be changed.");
 
-    if (status === "CANCELLED") {
-      for (const item of order.items) {
-        if (item.variantId) {
-          await tx.variant.updateMany({ where: { id: item.variantId }, data: { stock: { increment: item.quantity } } });
-        }
-        if (Array.isArray(item.contents)) {
-          for (const c of item.contents as { variantId?: string; quantity?: number }[]) {
-            if (c.variantId) {
-              await tx.variant.updateMany({
-                where: { id: c.variantId },
-                data: { stock: { increment: (c.quantity ?? 1) * item.quantity } },
-              });
-            }
-          }
-        }
-        if (item.productId) {
-          await tx.product.updateMany({
-            where: { id: item.productId, soldCount: { gte: item.quantity } },
-            data: { soldCount: { decrement: item.quantity } },
-          });
-        }
-        if (item.giftBoxId) {
-          await tx.giftBox.updateMany({
-            where: { id: item.giftBoxId, soldCount: { gte: item.quantity } },
-            data: { soldCount: { decrement: item.quantity } },
-          });
-        }
-      }
-      if (order.promoCodeId) {
-        await tx.promoCode.updateMany({ where: { id: order.promoCodeId, usedCount: { gt: 0 } }, data: { usedCount: { decrement: 1 } } });
-      }
-    }
+    if (status === "CANCELLED") await releaseOrder(tx, order);
 
     return tx.order.update({
       where: { id: orderId },
@@ -178,5 +174,20 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus, no
         history: { create: { status, note: note?.trim() || null, notifiedCustomer } },
       },
     });
+  });
+}
+
+/**
+ * Permanently delete an order. If it was still open (Pending or Shipped), its items
+ * go back into stock and its promo-code use is released first. Delivered and
+ * cancelled orders are simply removed.
+ */
+export async function deleteOrder(orderId: string) {
+  return db.$transaction(async (tx) => {
+    const order = await tx.order.findUnique({ where: { id: orderId }, include: { items: true } });
+    if (!order) throw new OrderError("Order not found.");
+    if (order.status === "PENDING" || order.status === "SHIPPED") await releaseOrder(tx, order);
+    await tx.order.delete({ where: { id: orderId } });
+    return order;
   });
 }

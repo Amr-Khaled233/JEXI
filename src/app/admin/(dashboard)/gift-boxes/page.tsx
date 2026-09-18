@@ -38,9 +38,9 @@ export default async function GiftBoxesAdminPage() {
               return (
                 <tr key={b.id}>
                   <td>
-                    <Link href={`/admin/gift-boxes/${b.id}`} className="flex items-center gap-3 hover:text-gold">
-                      <span className="relative aspect-4/5 w-10 shrink-0 overflow-hidden rounded-[2px] bg-surface-2">
-                        <Image src={b.coverImage} alt="" fill sizes="40px" className="object-cover" />
+                    <Link href={`/admin/gift-boxes/${b.id}`} className="flex items-center gap-4 hover:text-gold">
+                      <span className="relative aspect-4/5 w-16 shrink-0 overflow-hidden rounded-[3px] bg-surface-2 ring-1 ring-border">
+                        <Image src={b.coverImage} alt="" fill sizes="64px" className="object-cover" />
                       </span>
                       <span>
                         <span className="font-medium">{b.name}</span>

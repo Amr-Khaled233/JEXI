@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { DeleteOrderButton } from "@/components/admin/delete-order-button";
 import { OrderStatusForm } from "@/components/admin/order-status-form";
 import { OrderStatusBadge, Panel } from "@/components/admin/ui";
 import { OrderAddress, OrderItems, OrderSummaryTotals } from "@/components/order-details";
@@ -36,13 +37,16 @@ export default async function AdminOrderPage({ params }: Props) {
           <h1 className="font-sans text-2xl font-medium tabular-nums md:text-3xl">{order.orderNumber}</h1>
           <p className="mt-1 text-sm text-muted">Placed {formatDate(order.createdAt, true)}</p>
         </div>
-        <OrderStatusBadge status={order.status} />
+        <div className="flex items-center gap-3">
+          <OrderStatusBadge status={order.status} />
+          <DeleteOrderButton orderId={order.id} orderNumber={order.orderNumber} open={order.status === "PENDING" || order.status === "SHIPPED"} redirectToList />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="space-y-6">
           <Panel title="Items">
-            <OrderItems items={order.items} showSku />
+            <OrderItems items={order.items} />
             <div className="mt-4 border-t border-border pt-4">
               <OrderSummaryTotals order={order} />
             </div>

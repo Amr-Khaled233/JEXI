@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gift, LayoutDashboard, Package, Settings, ShoppingCart, Tags, Ticket, Truck } from "lucide-react";
+import { BadgePercent, Gift, LayoutDashboard, Package, Settings, ShoppingCart, Tags, Ticket, Truck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
@@ -10,8 +10,9 @@ const LINKS = [
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/gift-boxes", label: "Gift Boxes", icon: Gift },
-  { href: "/admin/categories", label: "Categories", icon: Tags },
+  { href: "/admin/categories", label: "Categories & Colors", icon: Tags },
   { href: "/admin/promo-codes", label: "Promo Codes", icon: Ticket },
+  { href: "/admin/free-shipping", label: "Free Shipping", icon: BadgePercent },
   { href: "/admin/shipping", label: "Shipping Zones", icon: Truck },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];

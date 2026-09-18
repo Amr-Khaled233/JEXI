@@ -6,7 +6,7 @@ import { SlidersHorizontal, X } from "lucide-react";
 import { ColorSwatch } from "@/components/color-swatch";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Input, Select } from "@/components/ui/field";
-import { COLOR_KEYS, COLORS, TAG_KEYS, TAGS } from "@/lib/constants";
+import { TAG_KEYS, TAGS, type ColorInfo } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 type Category = { slug: string; name: string };
@@ -64,7 +64,7 @@ export function SortSelect() {
   );
 }
 
-export function FilterPanel({ categories }: { categories?: Category[] }) {
+export function FilterPanel({ categories, colors }: { categories?: Category[]; colors: ColorInfo[] }) {
   const { params, update, toggle, has, pending } = useFilterNav();
   const [min, setMin] = useState(params.get("min") ?? "");
   const [max, setMax] = useState(params.get("max") ?? "");
@@ -99,14 +99,14 @@ export function FilterPanel({ categories }: { categories?: Category[] }) {
       )}
 
       <FilterGroup title="Color">
-        {COLOR_KEYS.map((c) => (
+        {colors.map((c) => (
           <Checkbox
-            key={c}
-            checked={has("color", c)}
-            onChange={() => toggle("color", c)}
+            key={c.id}
+            checked={has("color", c.slug)}
+            onChange={() => toggle("color", c.slug)}
             label={
               <span className="inline-flex items-center gap-2">
-                <ColorSwatch color={c} /> {COLORS[c].label}
+                <ColorSwatch hex={c.hex} /> {c.name}
               </span>
             }
           />
@@ -163,7 +163,7 @@ function FilterGroup({ title, children }: { title: string; children: React.React
   );
 }
 
-export function MobileFilters({ categories }: { categories?: Category[] }) {
+export function MobileFilters({ categories, colors }: { categories?: Category[]; colors: ColorInfo[] }) {
   const [open, setOpen] = useState(false);
   const params = useSearchParams();
   const count = ["category", "color", "tag", "min", "max"].filter((k) => params.get(k)).length;
@@ -184,7 +184,7 @@ export function MobileFilters({ categories }: { categories?: Category[] }) {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-6">
-              <FilterPanel categories={categories} />
+              <FilterPanel categories={categories} colors={colors} />
             </div>
             <div className="border-t border-border p-4">
               <Button type="button" className="w-full" onClick={() => setOpen(false)}>

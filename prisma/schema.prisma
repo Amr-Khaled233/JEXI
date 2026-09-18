@@ -14,12 +14,6 @@ datasource db {
 
 // ─── Enums ─────────────────────────────────────────────────
 
-enum Color {
-  GOLD
-  SILVER
-  ROSE_GOLD
-}
-
 enum ProductTag {
   BEST_SELLER
   NEW
@@ -28,8 +22,6 @@ enum ProductTag {
 
 enum OrderStatus {
   PENDING
-  CONFIRMED
-  PROCESSING
   SHIPPED
   DELIVERED
   CANCELLED
@@ -50,12 +42,6 @@ enum DiscountType {
   FIXED
 }
 
-enum PromoScope {
-  ALL
-  CATEGORY
-  PRODUCTS
-}
-
 enum AdminRole {
   OWNER
   STAFF
@@ -73,8 +59,19 @@ model Category {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  products   Product[]   @relation("ProductCategories")
-  promoCodes PromoCode[] @relation("PromoCategories")
+  products Product[] @relation("ProductCategories")
+}
+
+/// Colors a product can be offered in (managed from the dashboard).
+model Color {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  hex       String // "#d4af37"
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  variants Variant[]
 }
 
 model Product {
@@ -82,7 +79,6 @@ model Product {
   name           String
   slug           String       @unique
   description    String       @default("")
-  sku            String       @unique
   price          Int
   compareAtPrice Int?
   images         String[]
@@ -96,23 +92,22 @@ model Product {
   variants     Variant[]
   giftBoxItems GiftBoxItem[]
   orderItems   OrderItem[]
-  promoCodes   PromoCode[]   @relation("PromoProducts")
 
   @@index([published, createdAt])
 }
 
 model Variant {
-  id        String  @id @default(cuid())
+  id        String @id @default(cuid())
   productId String
-  color     Color
-  sku       String? @unique
-  stock     Int     @default(0)
+  colorId   String
+  stock     Int    @default(0)
 
   product      Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  color        Color         @relation(fields: [colorId], references: [id], onDelete: Restrict)
   giftBoxItems GiftBoxItem[]
   orderItems   OrderItem[]
 
-  @@unique([productId, color])
+  @@unique([productId, colorId])
 }
 
 model GiftBox {
@@ -158,14 +153,11 @@ model PromoCode {
   perCustomerLimit Int? // per email/phone; null = unlimited
   usedCount        Int          @default(0)
   minOrderValue    Int? // piastres
-  scope            PromoScope   @default(ALL)
   active           Boolean      @default(true)
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
-  categories Category[] @relation("PromoCategories")
-  products   Product[]  @relation("PromoProducts")
-  orders     Order[]
+  orders Order[]
 }
 
 // ─── Shipping ──────────────────────────────────────────────
@@ -222,13 +214,12 @@ model OrderItem {
   giftBoxId String?
   // Snapshots so the order stays readable if the catalog changes.
   name      String
-  color     Color?
-  sku       String?
+  colorName String?
   image     String?
   unitPrice Int
   quantity  Int
   lineTotal Int
-  // Gift boxes: [{ name, color, quantity, productId, variantId }]
+  // Gift boxes: [{ name, color (name), quantity, productId, variantId }]
   contents  Json?
 
   order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -279,23 +270,32 @@ model AdminPasswordReset {
 }
 
 model StoreSettings {
-  id                    Int     @id @default(1)
-  storeName             String  @default("JEXI Accessories")
-  tagline               String? @default("Timeless pieces for every day")
-  announcement          String? @default("Free shipping across Egypt")
+  id                    Int       @id @default(1)
+  storeName             String    @default("JEXI Accessories")
+  tagline               String?   @default("Timeless pieces for every day")
+  announcement          String?   @default("Free shipping across Egypt")
   contactEmail          String?
   contactPhone          String?
   whatsapp              String?
   instagram             String?
+  facebook              String?
+  tiktok                String?
+  // Which social links appear in the footer.
+  showInstagram         Boolean   @default(true)
+  showFacebook          Boolean   @default(true)
+  showTiktok            Boolean   @default(true)
   // New-order alerts go here (falls back to ADMIN_NOTIFICATION_EMAIL, then GMAIL_USER).
   notificationEmail     String?
-  freeShippingEnabled   Boolean @default(true)
+  // Free-shipping offer: on/off, optional date window, optional minimum order.
+  freeShippingEnabled   Boolean   @default(true)
+  freeShippingStartsAt  DateTime?
+  freeShippingEndsAt    DateTime?
   // piastres; when set, orders at or above it ship free even to zones with a fee.
   freeShippingThreshold Int?
   // piastres; charged when free shipping is off and the zone has no fee override.
-  defaultShippingFee    Int     @default(0)
-  defaultTheme          String  @default("dark") // "dark" | "light" | "system"
-  lowStockThreshold     Int     @default(3)
+  defaultShippingFee    Int       @default(0)
+  defaultTheme          String    @default("dark") // "dark" | "light" | "system"
+  lowStockThreshold     Int       @default(3)
 }
 
 // Fixed-window rate-limit counters (shared across serverless instances).

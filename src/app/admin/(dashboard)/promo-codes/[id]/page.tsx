@@ -11,11 +11,7 @@ export const metadata: Metadata = { title: "Edit promo code" };
 
 export default async function EditPromoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [promo, categories, products] = await Promise.all([
-    db.promoCode.findUnique({ where: { id }, include: { categories: { select: { id: true } }, products: { select: { id: true } } } }),
-    db.category.findMany({ orderBy: { sortOrder: "asc" }, select: { id: true, name: true } }),
-    db.product.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
-  ]);
+  const promo = await db.promoCode.findUnique({ where: { id } });
   if (!promo) notFound();
 
   return (
@@ -25,8 +21,6 @@ export default async function EditPromoPage({ params }: { params: Promise<{ id: 
       </Link>
       <PageTitle title={promo.code} description={`Used ${promo.usedCount}/${promo.usageLimit ?? "∞"}`} />
       <PromoForm
-        categories={categories}
-        products={products}
         initial={{
           id: promo.id,
           code: promo.code,
@@ -38,9 +32,6 @@ export default async function EditPromoPage({ params }: { params: Promise<{ id: 
           usageLimit: promo.usageLimit?.toString() ?? "",
           perCustomerLimit: promo.perCustomerLimit?.toString() ?? "",
           minOrderValue: promo.minOrderValue != null ? String(fromMinor(promo.minOrderValue)) : "",
-          scope: promo.scope,
-          categoryIds: promo.categories.map((c) => c.id),
-          productIds: promo.products.map((p) => p.id),
           active: promo.active,
           usedCount: promo.usedCount,
         }}

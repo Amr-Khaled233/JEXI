@@ -6,10 +6,10 @@ import { checkLogin, endSession, hashPassword, startSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { isEmailConfigured, sendMail } from "@/lib/email/mailer";
 import { adminPasswordResetEmail } from "@/lib/email/templates";
-import { consumeAdminResetToken, createAdminResetToken, maskEmail, RESET_TOKEN_TTL_MINUTES } from "@/lib/password-reset";
+import { consumeAdminResetToken, createAdminResetToken, RESET_TOKEN_TTL_MINUTES } from "@/lib/password-reset";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { brandFromSettings } from "@/lib/email/notifications";
-import { getNotificationEmail, getSettings } from "@/lib/settings";
+import { getSettings } from "@/lib/settings";
 import { appUrl } from "@/lib/utils";
 
 export type LoginState = { error?: string } | undefined;
@@ -42,12 +42,12 @@ export async function adminLogoutAction() {
 
 // ─── Forgot / reset password ──────────────────────────────
 
-export type ForgotState = { error?: string; sentTo?: string } | undefined;
+export type ForgotState = { error?: string; sent?: boolean } | undefined;
 
 /**
- * Emails a reset link to the store's notification inbox (Admin → Settings →
- * "New-order notification email", falling back to ADMIN_NOTIFICATION_EMAIL, then GMAIL_USER).
- * The response is the same whether or not the email belongs to an admin.
+ * Emails a reset link to the admin's own email address, so every admin can
+ * reset their own password. The response is the same whether or not the email
+ * belongs to an admin.
  */
 export async function requestAdminPasswordResetAction(_prev: ForgotState, formData: FormData): Promise<ForgotState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
@@ -55,8 +55,7 @@ export async function requestAdminPasswordResetAction(_prev: ForgotState, formDa
   const allowed = (await rateLimit(`admin-forgot:ip:${await clientIp()}`, 5)) && (await rateLimit(`admin-forgot:email:${email}`, 3, 15 * 60_000));
   if (!allowed) return { error: "Too many requests. Please try again in a few minutes." };
 
-  const inbox = await getNotificationEmail();
-  if (!isEmailConfigured() || !inbox) {
+  if (!isEmailConfigured()) {
     return { error: "Email isn't configured on the server yet (GMAIL_USER / GMAIL_APP_PASSWORD), so a reset link can't be sent." };
   }
 
@@ -66,10 +65,10 @@ export async function requestAdminPasswordResetAction(_prev: ForgotState, formDa
     const link = appUrl(`/admin/reset-password?token=${token}`);
     // Sent after the response so timing doesn't reveal whether the account exists.
     const brand = brandFromSettings(await getSettings());
-    after(() => sendMail({ to: inbox, ...adminPasswordResetEmail(admin, link, RESET_TOKEN_TTL_MINUTES, brand) }));
+    after(() => sendMail({ to: admin.email, ...adminPasswordResetEmail(admin, link, RESET_TOKEN_TTL_MINUTES, brand) }));
   }
 
-  return { sentTo: maskEmail(inbox) };
+  return { sent: true };
 }
 
 export type ResetState = { error?: string } | undefined;

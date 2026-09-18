@@ -1,12 +1,12 @@
-import { COLORS, type ColorKey } from "@/lib/constants";
+import { swatchBackground } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-export function ColorSwatch({ color, className }: { color: ColorKey; className?: string }) {
+export function ColorSwatch({ hex, name, className }: { hex: string; name?: string; className?: string }) {
   return (
     <span
-      title={COLORS[color].label}
+      title={name}
       className={cn("inline-block size-3.5 shrink-0 rounded-full ring-1 ring-black/10 dark:ring-white/15", className)}
-      style={{ background: COLORS[color].swatch }}
+      style={{ background: swatchBackground(hex) }}
     />
   );
 }

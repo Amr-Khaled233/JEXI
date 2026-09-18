@@ -46,9 +46,3 @@ export async function consumeAdminResetToken(token: string, passwordHash: string
   return true;
 }
 
-/** "amr.khufra250@gmail.com" → "am•••••••••@gmail.com" */
-export function maskEmail(email: string) {
-  const [user, domain] = email.split("@");
-  if (!domain) return email;
-  return `${user.slice(0, 2)}${"•".repeat(Math.max(3, user.length - 2))}@${domain}`;
-}

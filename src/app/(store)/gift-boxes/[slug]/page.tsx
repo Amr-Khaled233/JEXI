@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import { ColorSwatch } from "@/components/color-swatch";
 import { AddGiftBoxToCart } from "@/components/store/add-to-cart";
 import { getGiftBoxBySlug, giftBoxValue } from "@/lib/catalog";
-import { COLORS } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -71,7 +70,7 @@ export default async function GiftBoxPage({ params }: Props) {
                       <span className="font-serif text-lg">{item.product.name}</span>
                     )}
                     <p className="flex items-center gap-1.5 text-xs text-muted">
-                      <ColorSwatch color={item.variant.color} className="size-3" /> {COLORS[item.variant.color].label}
+                      <ColorSwatch hex={item.variant.color.hex} className="size-3" /> {item.variant.color.name}
                       {item.quantity > 1 && ` · × ${item.quantity}`}
                     </p>
                   </div>

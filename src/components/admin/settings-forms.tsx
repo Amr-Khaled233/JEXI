@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { changePasswordAction, createAdminAction, saveSettingsAction } from "@/app/admin/actions/store";
+import { createAdminAction, saveSettingsAction } from "@/app/admin/actions/store";
 import { Panel } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { Alert, Checkbox, Field, Input, Select } from "@/components/ui/field";
@@ -14,13 +14,21 @@ type SettingsValues = {
   contactPhone: string | null;
   whatsapp: string | null;
   instagram: string | null;
+  facebook: string | null;
+  tiktok: string | null;
+  showInstagram: boolean;
+  showFacebook: boolean;
+  showTiktok: boolean;
   notificationEmail: string | null;
-  freeShippingEnabled: boolean;
-  freeShippingThreshold: string;
-  defaultShippingFee: string;
   defaultTheme: string;
   lowStockThreshold: number;
 };
+
+const SOCIALS = [
+  { key: "instagram", show: "showInstagram", label: "Instagram", placeholder: "jexi.accessories" },
+  { key: "facebook", show: "showFacebook", label: "Facebook", placeholder: "jexiaccessories" },
+  { key: "tiktok", show: "showTiktok", label: "TikTok", placeholder: "@jexi.accessories" },
+] as const;
 
 export function SettingsForm({ initial, isOwner }: { initial: SettingsValues; isOwner: boolean }) {
   const [state, action, pending] = useActionState(saveSettingsAction, undefined);
@@ -31,7 +39,7 @@ export function SettingsForm({ initial, isOwner }: { initial: SettingsValues; is
           <Field label="Store name" htmlFor="storeName">
             <Input id="storeName" name="storeName" defaultValue={initial.storeName} required />
           </Field>
-          <Field label="Tagline" htmlFor="tagline">
+          <Field label="Tagline" htmlFor="tagline" hint="Shown in the footer.">
             <Input id="tagline" name="tagline" defaultValue={initial.tagline ?? ""} />
           </Field>
           <Field label="Announcement bar" htmlFor="announcement" hint="Shown at the top of every page. Leave blank to hide." className="sm:col-span-2">
@@ -43,29 +51,35 @@ export function SettingsForm({ initial, isOwner }: { initial: SettingsValues; is
           <Field label="Contact phone" htmlFor="contactPhone">
             <Input id="contactPhone" name="contactPhone" defaultValue={initial.contactPhone ?? ""} />
           </Field>
-          <Field label="WhatsApp number" htmlFor="whatsapp">
-            <Input id="whatsapp" name="whatsapp" defaultValue={initial.whatsapp ?? ""} placeholder="01XXXXXXXXX" />
-          </Field>
-          <Field label="Instagram handle" htmlFor="instagram">
-            <Input id="instagram" name="instagram" defaultValue={initial.instagram ?? ""} placeholder="jexi.accessories" />
+          <Field label="New-order notification email" htmlFor="notificationEmail" hint={isOwner ? "New orders are emailed here." : "Only the store owner can change this."} className="sm:col-span-2">
+            <Input id="notificationEmail" name="notificationEmail" type="email" defaultValue={initial.notificationEmail ?? ""} readOnly={!isOwner} className={isOwner ? undefined : "opacity-60"} />
           </Field>
         </div>
       </Panel>
 
-      <Panel title="Notifications & appearance">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field
-            label="New-order notification email"
-            htmlFor="notificationEmail"
-            hint={isOwner ? "New-order alerts and admin password-reset links are sent here." : "Only the store owner can change this, because password-reset links are sent here."}
-            className="sm:col-span-3"
-          >
-            <Input id="notificationEmail" name="notificationEmail" type="email" defaultValue={initial.notificationEmail ?? ""} readOnly={!isOwner} className={isOwner ? undefined : "opacity-60"} />
+      <Panel title="Social links">
+        <p className="-mt-2 mb-5 text-sm text-muted">Add your accounts and choose which ones appear in the footer. You can enter a username or a full link.</p>
+        <div className="space-y-4">
+          {SOCIALS.map((net) => (
+            <div key={net.key} className="grid items-end gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <Field label={net.label} htmlFor={net.key}>
+                <Input id={net.key} name={net.key} defaultValue={initial[net.key] ?? ""} placeholder={net.placeholder} />
+              </Field>
+              <Checkbox name={net.show} defaultChecked={initial[net.show]} label="Show in footer" className="h-11" />
+            </div>
+          ))}
+          <Field label="WhatsApp number" htmlFor="whatsapp" hint="Shown as a WhatsApp button in the footer and in customer emails. Leave blank to hide.">
+            <Input id="whatsapp" name="whatsapp" defaultValue={initial.whatsapp ?? ""} placeholder="01XXXXXXXXX" />
           </Field>
+        </div>
+      </Panel>
+
+      <Panel title="Appearance">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Default theme" htmlFor="defaultTheme" hint="Visitors can still switch.">
             <Select id="defaultTheme" name="defaultTheme" defaultValue={initial.defaultTheme}>
-              <option value="dark">Dark (black & gold)</option>
-              <option value="light">Light (ivory & bronze)</option>
+              <option value="dark">Dark (black and gold)</option>
+              <option value="light">Light (ivory and bronze)</option>
               <option value="system">Match device</option>
             </Select>
           </Field>
@@ -75,19 +89,7 @@ export function SettingsForm({ initial, isOwner }: { initial: SettingsValues; is
         </div>
       </Panel>
 
-      <Panel title="Shipping">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Checkbox name="freeShippingEnabled" defaultChecked={initial.freeShippingEnabled} label="Free shipping (default for every zone without its own fee)" className="sm:col-span-2" />
-          <Field label="Default shipping fee (EGP)" htmlFor="defaultShippingFee" hint="Used when free shipping is off.">
-            <Input id="defaultShippingFee" name="defaultShippingFee" type="number" min={0} step="0.01" defaultValue={initial.defaultShippingFee} />
-          </Field>
-          <Field label="Free shipping over (EGP)" htmlFor="freeShippingThreshold" hint="Optional. Waives any fee above this order total.">
-            <Input id="freeShippingThreshold" name="freeShippingThreshold" type="number" min={0} step="0.01" defaultValue={initial.freeShippingThreshold} />
-          </Field>
-        </div>
-      </Panel>
-
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <Button type="submit" loading={pending}>
           Save settings
         </Button>
@@ -122,27 +124,6 @@ export function AddAdminForm() {
       <div>
         <Button type="submit" variant="outline" size="sm" loading={pending}>
           Add admin
-        </Button>
-      </div>
-    </form>
-  );
-}
-
-export function ChangePasswordForm() {
-  const [state, action, pending] = useActionState(changePasswordAction, undefined);
-  return (
-    <form action={action} className="grid max-w-xl gap-3 sm:grid-cols-2" key={state?.success}>
-      {state?.error && <Alert tone="error" className="sm:col-span-2">{state.error}</Alert>}
-      {state?.success && <Alert tone="success" className="sm:col-span-2">{state.success}</Alert>}
-      <Field label="Current password" htmlFor="current">
-        <Input id="current" name="current" type="password" required autoComplete="current-password" className="h-10" />
-      </Field>
-      <Field label="New password" htmlFor="next">
-        <Input id="next" name="next" type="password" required minLength={10} autoComplete="new-password" className="h-10" />
-      </Field>
-      <div>
-        <Button type="submit" variant="outline" size="sm" loading={pending}>
-          Update password
         </Button>
       </div>
     </form>

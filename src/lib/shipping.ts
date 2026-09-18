@@ -1,7 +1,14 @@
 import { formatMoney } from "@/lib/money";
-import type { Settings } from "@/lib/settings";
 
 type ZoneLike = { name: string; enabled: boolean; fee: number | null; estimatedDelivery: string | null };
+
+type ShippingSettings = {
+  freeShippingEnabled: boolean;
+  freeShippingStartsAt: Date | null;
+  freeShippingEndsAt: Date | null;
+  freeShippingThreshold: number | null;
+  defaultShippingFee: number;
+};
 
 export type ShippingQuote = {
   fee: number;
@@ -15,23 +22,40 @@ export type ShippingQuote = {
   pending: boolean;
 };
 
+/** The free-shipping offer as configured in Admin → Free Shipping. */
+export function freeShippingOffer(settings: ShippingSettings, now = new Date()) {
+  const started = !settings.freeShippingStartsAt || now >= settings.freeShippingStartsAt;
+  const notEnded = !settings.freeShippingEndsAt || now <= settings.freeShippingEndsAt;
+  const active = settings.freeShippingEnabled && started && notEnded;
+  const scheduled = settings.freeShippingEnabled && !started;
+  return { active, scheduled, minimum: settings.freeShippingThreshold, endsAt: settings.freeShippingEndsAt };
+}
+
+/** Short customer-facing line, e.g. "Free shipping on orders over EGP 1,000". Null when there's no offer. */
+export function freeShippingMessage(settings: ShippingSettings) {
+  const offer = freeShippingOffer(settings);
+  if (!offer.active) return null;
+  return offer.minimum ? `Free shipping on orders over ${formatMoney(offer.minimum)}` : "Free shipping across Egypt";
+}
+
 /**
- * Shipping rules, in order:
- * 1. A zone with a fee override > 0 charges that fee.
- * 2. Otherwise, free shipping when enabled in Settings (the default).
- * 3. Otherwise, the store's default shipping fee.
- * 4. Any fee is waived when the order (after discount) reaches the free-shipping threshold.
+ * Shipping rules:
+ * 1. Free when the free-shipping offer is on, today is inside its dates (if set),
+ *    and the order after discount reaches its minimum (if set).
+ * 2. Otherwise the governorate's own fee, or the store's default fee.
  */
-export function computeShipping(settings: Settings, zone: ZoneLike | null, merchandiseTotal: number, requestedZone?: string | null): ShippingQuote {
+export function computeShipping(settings: ShippingSettings, zone: ZoneLike | null, merchandiseTotal: number, requestedZone?: string | null): ShippingQuote {
+  const offer = freeShippingOffer(settings);
+  const qualifiesForFree = offer.active && (offer.minimum == null || merchandiseTotal >= offer.minimum);
+
   if (!zone) {
     if (requestedZone) {
       return { fee: 0, free: false, label: "Unavailable", zone: requestedZone, estimatedDelivery: null, available: false, pending: false };
     }
-    const free = settings.freeShippingEnabled;
     return {
       fee: 0,
-      free,
-      label: free ? "Free Shipping" : "Calculated at checkout",
+      free: qualifiesForFree,
+      label: qualifiesForFree ? "Free Shipping" : "Calculated at checkout",
       zone: null,
       estimatedDelivery: null,
       available: true,
@@ -43,15 +67,7 @@ export function computeShipping(settings: Settings, zone: ZoneLike | null, merch
     return { fee: 0, free: false, label: "Unavailable", zone: zone.name, estimatedDelivery: null, available: false, pending: false };
   }
 
-  let fee: number;
-  if (zone.fee != null && zone.fee > 0) fee = zone.fee;
-  else if (settings.freeShippingEnabled) fee = 0;
-  else fee = zone.fee ?? settings.defaultShippingFee;
-
-  if (fee > 0 && settings.freeShippingThreshold != null && merchandiseTotal >= settings.freeShippingThreshold) {
-    fee = 0;
-  }
-
+  const fee = qualifiesForFree ? 0 : (zone.fee ?? settings.defaultShippingFee);
   return {
     fee,
     free: fee === 0,

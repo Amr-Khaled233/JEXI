@@ -11,7 +11,7 @@ export function brandFromSettings(settings: Settings): EmailBrand {
 async function loadOrder(orderId: string): Promise<EmailOrder | null> {
   return db.order.findUnique({
     where: { id: orderId },
-    include: { items: { select: { name: true, color: true, image: true, quantity: true, unitPrice: true, lineTotal: true, contents: true } } },
+    include: { items: { select: { name: true, colorName: true, image: true, quantity: true, unitPrice: true, lineTotal: true, contents: true } } },
   });
 }
 

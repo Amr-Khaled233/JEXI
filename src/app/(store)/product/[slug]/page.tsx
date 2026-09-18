@@ -12,6 +12,7 @@ import { getProductBySlug, getRelatedProducts } from "@/lib/catalog";
 import { TAGS } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
 import { getSettings } from "@/lib/settings";
+import { freeShippingMessage } from "@/lib/shipping";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -76,14 +77,14 @@ export default async function ProductPage({ params }: Props) {
           <div className="my-8 h-px bg-border" />
 
           <AddToCart
-            variants={product.variants.map((v) => ({ id: v.id, color: v.color, stock: v.stock }))}
+            variants={product.variants.map((v) => ({ id: v.id, color: { name: v.color.name, hex: v.color.hex }, stock: v.stock }))}
             lowStockThreshold={settings.lowStockThreshold}
           />
 
           <ul className="mt-8 space-y-3 text-sm text-muted">
             <li className="flex items-center gap-3">
               <Truck className="size-4 text-gold" strokeWidth={1.5} />
-              {settings.freeShippingEnabled ? "Free shipping across Egypt" : "Delivery across Egypt"}
+              {freeShippingMessage(settings) ?? "Delivery across Egypt"}
             </li>
             <li className="flex items-center gap-3">
               <ShieldCheck className="size-4 text-gold" strokeWidth={1.5} /> Cash on delivery
@@ -97,7 +98,6 @@ export default async function ProductPage({ params }: Props) {
             <div className="mt-8 border-t border-border pt-8">
               <h2 className="mb-3 text-[0.68rem] font-sans tracking-[0.24em] text-gold uppercase">Details</h2>
               <p className="leading-relaxed whitespace-pre-line text-fg/85">{product.description}</p>
-              <p className="mt-4 text-xs text-muted">SKU: {product.sku}</p>
             </div>
           )}
         </div>

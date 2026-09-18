@@ -1,14 +1,12 @@
 import Image from "next/image";
-import { COLORS, type ColorKey } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
 import { PAYMENT_LABELS } from "@/lib/payments";
 
 type Item = {
   id: string;
   name: string;
-  color: ColorKey | null;
+  colorName: string | null;
   image: string | null;
-  sku: string | null;
   unitPrice: number;
   quantity: number;
   lineTotal: number;
@@ -33,7 +31,7 @@ type Order = {
   items: Item[];
 };
 
-export function OrderItems({ items, showSku }: { items: Item[]; showSku?: boolean }) {
+export function OrderItems({ items }: { items: Item[] }) {
   return (
     <ul className="divide-y divide-border">
       {items.map((item) => (
@@ -44,15 +42,14 @@ export function OrderItems({ items, showSku }: { items: Item[]; showSku?: boolea
           <div className="min-w-0 flex-1">
             <p className="font-serif text-lg leading-tight">{item.name}</p>
             <p className="text-xs text-muted">
-              {item.color && COLORS[item.color].label}
-              {showSku && item.sku && ` · ${item.sku}`}
+              {item.colorName}
               {` · ${formatMoney(item.unitPrice)} × ${item.quantity}`}
             </p>
             {Array.isArray(item.contents) && (
               <ul className="mt-1.5 space-y-0.5 text-xs text-muted">
-                {(item.contents as { name: string; color: ColorKey; quantity: number }[]).map((c, i) => (
+                {(item.contents as { name: string; color: string; quantity: number }[]).map((c, i) => (
                   <li key={i}>
-                    {c.name}, {COLORS[c.color]?.label}
+                    {c.name}, {c.color}
                     {c.quantity > 1 && ` × ${c.quantity}`}
                   </li>
                 ))}

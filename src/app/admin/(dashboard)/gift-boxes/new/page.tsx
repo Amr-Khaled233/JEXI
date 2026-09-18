@@ -10,7 +10,7 @@ export default async function NewGiftBoxPage() {
   return (
     <>
       <PageTitle title="New gift box" />
-      <GiftBoxForm products={products} initial={{ name: "", slug: "", description: "", coverImage: "", price: "", published: false, items: [] }} />
+      <GiftBoxForm products={products} initial={{ name: "", description: "", coverImage: "", price: "", published: false, items: [] }} />
     </>
   );
 }

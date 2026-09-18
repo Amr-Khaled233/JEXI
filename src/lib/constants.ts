@@ -1,15 +1,25 @@
 // Shared, client-safe constants. String unions mirror the Prisma enums.
 
-export type ColorKey = "GOLD" | "SILVER" | "ROSE_GOLD";
 export type TagKey = "BEST_SELLER" | "NEW" | "SALE";
-export type OrderStatusKey = "PENDING" | "CONFIRMED" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+export type OrderStatusKey = "PENDING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 
-export const COLORS: Record<ColorKey, { label: string; swatch: string }> = {
-  GOLD: { label: "Gold", swatch: "linear-gradient(135deg,#f3d98b,#c9a24a 55%,#9c7a2e)" },
-  SILVER: { label: "Silver", swatch: "linear-gradient(135deg,#f4f4f4,#c3c5c8 55%,#8e9195)" },
-  ROSE_GOLD: { label: "Rose Gold / Copper", swatch: "linear-gradient(135deg,#f3c3b0,#c4826b 55%,#98583f)" },
-};
-export const COLOR_KEYS = Object.keys(COLORS) as ColorKey[];
+/** A product color, managed from the dashboard. */
+export type ColorInfo = { id: string; name: string; slug: string; hex: string };
+
+function shade(hex: string, amount: number) {
+  const n = parseInt(hex.slice(1), 16);
+  const ch = (shift: number) => {
+    const v = (n >> shift) & 255;
+    return Math.round(amount >= 0 ? v + (255 - v) * amount : v * (1 + amount));
+  };
+  return `rgb(${ch(16)} ${ch(8)} ${ch(0)})`;
+}
+
+/** A soft metallic swatch built from one hex color. */
+export function swatchBackground(hex: string) {
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) return "#888888";
+  return `linear-gradient(135deg, ${shade(hex, 0.45)}, ${hex} 55%, ${shade(hex, -0.3)})`;
+}
 
 export const TAGS: Record<TagKey, { label: string }> = {
   BEST_SELLER: { label: "Best Seller" },
@@ -19,16 +29,14 @@ export const TAGS: Record<TagKey, { label: string }> = {
 export const TAG_KEYS = Object.keys(TAGS) as TagKey[];
 
 export const ORDER_STATUSES: Record<OrderStatusKey, { label: string; description: string }> = {
-  PENDING: { label: "Pending", description: "We've received your order and will confirm it shortly." },
-  CONFIRMED: { label: "Confirmed", description: "Your order is confirmed and queued for preparation." },
-  PROCESSING: { label: "Processing", description: "Your pieces are being prepared and packed." },
+  PENDING: { label: "Pending", description: "We've received your order and are preparing it." },
   SHIPPED: { label: "Shipped", description: "Your order is on its way to you." },
-  DELIVERED: { label: "Delivered", description: "Your order has been delivered. Enjoy!" },
+  DELIVERED: { label: "Delivered", description: "Your order has been delivered." },
   CANCELLED: { label: "Cancelled", description: "This order was cancelled." },
 };
 export const ORDER_STATUS_KEYS = Object.keys(ORDER_STATUSES) as OrderStatusKey[];
-/** The happy-path progression shown on timelines. */
-export const ORDER_FLOW: OrderStatusKey[] = ["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED"];
+/** The happy-path progression shown on the tracking line. */
+export const ORDER_FLOW: OrderStatusKey[] = ["PENDING", "SHIPPED", "DELIVERED"];
 
 /** All 27 Egyptian governorates with a sensible default delivery estimate. */
 export const GOVERNORATES: { name: string; eta: string }[] = [

@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Promo Codes" };
 const TONES: Record<PromoStatus, BadgeTone> = { ACTIVE: "success", SCHEDULED: "gold", EXPIRED: "neutral", EXHAUSTED: "warning", INACTIVE: "neutral" };
 
 export default async function PromoCodesPage() {
-  const promos = await db.promoCode.findMany({ orderBy: { createdAt: "desc" }, include: { _count: { select: { categories: true, products: true } } } });
+  const promos = await db.promoCode.findMany({ orderBy: { createdAt: "desc" } });
 
   return (
     <>
@@ -47,8 +47,7 @@ export default async function PromoCodesPage() {
                   <td>
                     {p.discountType === "PERCENTAGE" ? `${p.value}%` : formatMoney(p.value)}
                     <span className="block text-xs text-muted">
-                      {p.scope === "ALL" ? "All products" : p.scope === "CATEGORY" ? `${p._count.categories} categories` : `${p._count.products} products`}
-                      {p.minOrderValue ? ` · min ${formatMoney(p.minOrderValue)}` : ""}
+                      {p.minOrderValue ? `Min. order ${formatMoney(p.minOrderValue)}` : "Whole order"}
                     </span>
                   </td>
                   <td className="text-xs whitespace-nowrap">

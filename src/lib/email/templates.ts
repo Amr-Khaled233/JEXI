@@ -2,7 +2,7 @@
 // consistently in Gmail, Apple Mail and Outlook, on desktop and phone.
 // Copy is written without decorative punctuation (no dashes, middle dots or "×").
 
-import { COLORS, ORDER_FLOW, type ColorKey, type OrderStatusKey } from "@/lib/constants";
+import { ORDER_FLOW, type OrderStatusKey } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
 import { appUrl, escapeHtml as e, formatDate } from "@/lib/utils";
 
@@ -36,7 +36,7 @@ export type EmailOrder = {
   createdAt: Date;
   items: {
     name: string;
-    color: ColorKey | null;
+    colorName: string | null;
     image: string | null;
     quantity: number;
     unitPrice: number;
@@ -95,8 +95,8 @@ function orderLink(order: EmailOrder) {
   return appUrl(`/order/${encodeURIComponent(order.orderNumber)}?t=${order.accessToken}`);
 }
 
-function colorLabel(color: ColorKey | null | undefined) {
-  return color && COLORS[color] ? tidy(COLORS[color].label.replace(" / ", " or ")) : null;
+function colorLabel(color: string | null | undefined) {
+  return color ? tidy(color.replace(" / ", " or ")) : null;
 }
 
 // ─── Building blocks ──────────────────────────────────────
@@ -177,7 +177,7 @@ function spacer(h = 28) {
   return `<tr><td style="height:${h}px;font-size:0;line-height:0;">&nbsp;</td></tr>`;
 }
 
-/** Five-step progress tracker, or a notice when the order was cancelled. */
+/** Three-step progress tracker (placed, on its way, delivered), or a notice when cancelled. */
 function tracker(status: OrderStatusKey) {
   if (status === "CANCELLED") {
     return `<tr><td class="px" style="padding:24px 44px 0;">
@@ -186,7 +186,7 @@ function tracker(status: OrderStatusKey) {
   </table>
 </td></tr>`;
   }
-  const labels: Record<string, string> = { PENDING: "Placed", CONFIRMED: "Confirmed", PROCESSING: "Preparing", SHIPPED: "On its way", DELIVERED: "Delivered" };
+  const labels: Record<string, string> = { PENDING: "Order placed", SHIPPED: "On its way", DELIVERED: "Delivered" };
   const current = ORDER_FLOW.indexOf(status);
   const cells = ORDER_FLOW.map((s, i) => {
     const done = i <= current;
@@ -195,7 +195,7 @@ function tracker(status: OrderStatusKey) {
     const dot = done
       ? `<div style="width:24px;height:24px;border-radius:24px;background:${C.gold};color:#ffffff;font-family:${SANS};font-size:12px;line-height:24px;text-align:center;font-weight:bold;">&#10003;</div>`
       : `<div style="width:20px;height:20px;border-radius:20px;border:2px solid ${C.line};background:#ffffff;font-size:0;line-height:0;">&nbsp;</div>`;
-    return `<td width="20%" align="center" valign="top" style="padding:0;">
+    return `<td width="33%" align="center" valign="top" style="padding:0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
         <td valign="middle" style="padding:0;"><div style="height:2px;background:${lineLeft};font-size:0;line-height:0;">&nbsp;</div></td>
         <td width="24" align="center" style="padding:0;">${dot}</td>
@@ -231,9 +231,9 @@ function itemsBlock(order: EmailOrder, title: string) {
   const rows = order.items
     .map((item) => {
       const img = absolute(item.image);
-      const details = [colorLabel(item.color), item.quantity > 1 ? `Qty ${item.quantity}` : null].filter(Boolean).join(", ");
+      const details = [colorLabel(item.colorName), item.quantity > 1 ? `Qty ${item.quantity}` : null].filter(Boolean).join(", ");
       const contents = Array.isArray(item.contents)
-        ? (item.contents as { name?: string; color?: ColorKey; quantity?: number }[])
+        ? (item.contents as { name?: string; color?: string; quantity?: number }[])
             .map((c) => `${e(String(c.name ?? ""))}${colorLabel(c.color) ? ` in ${colorLabel(c.color)}` : ""}${(c.quantity ?? 1) > 1 ? `, Qty ${c.quantity}` : ""}`)
             .join("<br>")
         : "";
@@ -329,7 +329,7 @@ function textFooter(brand: EmailBrand) {
 
 function textItems(order: EmailOrder) {
   const lines = order.items.map((i) => {
-    const details = [colorLabel(i.color), i.quantity > 1 ? `Qty ${i.quantity}` : null].filter(Boolean).join(", ");
+    const details = [colorLabel(i.colorName), i.quantity > 1 ? `Qty ${i.quantity}` : null].filter(Boolean).join(", ");
     return `${i.name}${details ? ` (${details})` : ""}: ${formatMoney(i.lineTotal)}`;
   });
   return [
@@ -418,19 +418,7 @@ const STATUS_COPY: Record<OrderStatusKey, { eyebrow: string; subject: string; he
     eyebrow: "Order received",
     subject: "We received your JEXI order",
     heading: (n) => `Thank you, ${n}`,
-    text: "We have received your order and will call you shortly to confirm the delivery.",
-  },
-  CONFIRMED: {
-    eyebrow: "Order confirmed",
-    subject: "Your JEXI order is confirmed",
-    heading: () => "Your order is confirmed",
-    text: "Good news. Your order is confirmed and our team will start preparing your pieces.",
-  },
-  PROCESSING: {
-    eyebrow: "Being prepared",
-    subject: "Your JEXI order is being prepared",
-    heading: () => "Your pieces are being prepared",
-    text: "We are carefully preparing and packing your pieces in our signature JEXI packaging.",
+    text: "We have received your order and are preparing it. We will call you shortly to confirm the delivery.",
   },
   SHIPPED: {
     eyebrow: "On its way",
@@ -478,55 +466,6 @@ export function customerStatusEmail(order: EmailOrder, status: OrderStatusKey, b
     subject,
     html: layout({ title: subject, preheader: copy.text, body, brand, footerNote: `You are receiving this email because you placed an order with ${brand.storeName}.` }),
     text: `${copy.heading(name)}\n\n${copy.text}${eta ? `\nEstimated delivery: ${eta}` : ""}${opts.note?.trim() ? `\n\nA note from JEXI: ${opts.note.trim()}` : ""}\n\nOrder ${order.orderNumber}\n${textItems(order)}\n\nTrack your order: ${orderLink(order)}${textFooter(brand)}`,
-  };
-}
-
-const STATUS_PILL: Record<OrderStatusKey, { label: string; bg: string; fg: string }> = {
-  PENDING: { label: "Received", bg: "#f6ecdc", fg: "#8a5a17" },
-  CONFIRMED: { label: "Confirmed", bg: "#f3e9dd", fg: C.goldText },
-  PROCESSING: { label: "Being prepared", bg: "#f3e9dd", fg: C.goldText },
-  SHIPPED: { label: "On its way", bg: "#1c140f", fg: "#ecd3b1" },
-  DELIVERED: { label: "Delivered", bg: "#e7f1ea", fg: C.success },
-  CANCELLED: { label: "Cancelled", bg: "#fbf1ef", fg: C.danger },
-};
-
-/** Sent from Track Order: every recent order for an email address, each with its private link. */
-export function customerOrdersEmail(
-  orders: { orderNumber: string; accessToken: string; status: OrderStatusKey; total: number; createdAt: Date; itemCount: number }[],
-  brand: EmailBrand,
-) {
-  const subject = orders.length === 1 ? "Your JEXI order" : `Your ${orders.length} JEXI orders`;
-  const rows = orders
-    .map((o) => {
-      const pill = STATUS_PILL[o.status];
-      const link = appUrl(`/order/${encodeURIComponent(o.orderNumber)}?t=${o.accessToken}`);
-      return `<tr><td style="padding:18px 0;border-bottom:1px solid ${C.line};font-family:${SANS};">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-        <td valign="top">
-          <div style="font-size:15px;font-weight:bold;color:${C.ink};">${e(o.orderNumber)}</div>
-          <div style="margin-top:4px;font-size:13px;color:${C.muted};">${e(formatDate(o.createdAt))}, ${o.itemCount} ${o.itemCount === 1 ? "item" : "items"}, ${formatMoney(o.total)}</div>
-          <div style="margin-top:10px;"><span style="display:inline-block;padding:4px 10px;border-radius:20px;background:${pill.bg};color:${pill.fg};font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:bold;">${pill.label}</span></div>
-        </td>
-        <td valign="middle" align="right" style="white-space:nowrap;">
-          <a href="${link}" style="display:inline-block;padding:10px 18px;border:1px solid ${C.ink};border-radius:4px;color:${C.ink};font-size:11px;letter-spacing:2px;text-transform:uppercase;text-decoration:none;font-weight:bold;">View</a>
-        </td>
-      </tr></table>
-    </td></tr>`;
-    })
-    .join("");
-
-  const body =
-    intro("Track your order", orders.length === 1 ? "Here is your order" : "Here are your orders", "Tap an order to see its latest status and full details.") +
-    `<tr><td class="px" style="padding:20px 44px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${rows}</table></td></tr>` +
-    `<tr><td class="px" style="padding:24px 44px 0;font-family:${SANS};font-size:13px;line-height:1.7;color:${C.muted};">These links are private to you. Please don't forward this email.</td></tr>` +
-    helpLine(brand);
-
-  return {
-    subject,
-    html: layout({ title: subject, preheader: "Your order status and details", body, brand, footerNote: "You are receiving this email because someone asked to track orders for this address on our website." }),
-    text: `Your JEXI orders\n\n${orders
-      .map((o) => `${o.orderNumber}, ${formatDate(o.createdAt)}, ${formatMoney(o.total)}, ${STATUS_PILL[o.status].label}\n${appUrl(`/order/${encodeURIComponent(o.orderNumber)}?t=${o.accessToken}`)}`)
-      .join("\n\n")}${textFooter(brand)}`,
   };
 }
 

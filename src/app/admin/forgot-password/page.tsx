@@ -10,7 +10,7 @@ export default function ForgotPasswordPage() {
       <Logo size="lg" />
       <div className="card w-full max-w-sm p-6">
         <h1 className="mb-1 text-2xl">Forgot password</h1>
-        <p className="mb-6 text-sm text-muted">We&apos;ll email a reset link to the store&apos;s notification inbox.</p>
+        <p className="mb-6 text-sm text-muted">Enter your admin email and we&apos;ll send you a link to choose a new password.</p>
         <ForgotPasswordForm />
       </div>
     </div>

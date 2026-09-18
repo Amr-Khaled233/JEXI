@@ -6,7 +6,6 @@ import { useState } from "react";
 import { Minus, Plus, Tag, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
-import { COLORS } from "@/lib/constants";
 import { useCart } from "@/lib/cart-store";
 import { formatMoney } from "@/lib/money";
 import type { Quote, QuoteLine } from "@/lib/pricing";
@@ -48,7 +47,7 @@ function CartLineRow({ line, compact, onNavigate }: { line: QuoteLine; compact?:
             <Link href={line.href} onClick={onNavigate} className="block font-serif text-lg leading-tight hover:text-gold">
               {line.name}
             </Link>
-            {line.color && <p className="mt-0.5 text-xs text-muted">{COLORS[line.color].label}</p>}
+            {line.colorName && <p className="mt-0.5 text-xs text-muted">{line.colorName}</p>}
             {line.kind === "giftbox" && <p className="mt-0.5 text-xs text-gold">Gift Box · {line.contents?.length} pieces</p>}
           </div>
           <button type="button" onClick={() => remove(line.key)} aria-label={`Remove ${line.name}`} className="p-1 text-muted hover:text-danger">

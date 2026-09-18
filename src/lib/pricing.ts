@@ -1,6 +1,4 @@
 import type { Prisma } from "@/generated/prisma/client";
-import type { ColorKey } from "@/lib/constants";
-import { COLORS } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { evaluatePromo, type PromoResult } from "@/lib/promo";
 import { getSettings } from "@/lib/settings";
@@ -26,7 +24,8 @@ export type GiftBoxContent = {
   productId: string;
   variantId: string;
   name: string;
-  color: ColorKey;
+  /** Color name, e.g. "Gold". */
+  color: string;
   quantity: number;
 };
 
@@ -36,10 +35,10 @@ export type QuoteLine = {
   name: string;
   href: string;
   image: string | null;
-  color: ColorKey | null;
-  sku: string | null;
+  colorName: string | null;
+  colorHex: string | null;
   unitPrice: number;
-  /** Strikethrough price: compare-at price for products, "bought separately" value for gift boxes. */
+  /** Strikethrough price: the regular price for products on sale, the "bought separately" value for gift boxes. */
   compareAtPrice: number | null;
   quantity: number;
   lineTotal: number;
@@ -49,7 +48,6 @@ export type QuoteLine = {
   productId?: string;
   variantId?: string;
   giftBoxId?: string;
-  categoryIds: string[];
   contents?: GiftBoxContent[];
 };
 
@@ -87,7 +85,7 @@ function normalizeItems(items: CartItemInput[]): CartItemInput[] {
 
 /**
  * The single source of truth for cart totals. Prices, stock, promo codes and
- * shipping are always read from the database — never trusted from the client.
+ * shipping are always read from the database, never trusted from the client.
  */
 export async function quoteCart(input: QuoteInput, client: DbClient = db): Promise<Quote> {
   const settings = await getSettings();
@@ -97,16 +95,11 @@ export async function quoteCart(input: QuoteInput, client: DbClient = db): Promi
   const giftBoxIds = items.flatMap((i) => (i.kind === "giftbox" ? [i.giftBoxId] : []));
 
   const [variants, giftBoxes] = await Promise.all([
-    variantIds.length
-      ? client.variant.findMany({
-          where: { id: { in: variantIds } },
-          include: { product: { include: { categories: { select: { id: true } } } } },
-        })
-      : [],
+    variantIds.length ? client.variant.findMany({ where: { id: { in: variantIds } }, include: { product: true, color: true } }) : [],
     giftBoxIds.length
       ? client.giftBox.findMany({
           where: { id: { in: giftBoxIds } },
-          include: { items: { include: { product: true, variant: true } } },
+          include: { items: { include: { product: true, variant: { include: { color: true } } } } },
         })
       : [],
   ]);
@@ -123,16 +116,15 @@ export async function quoteCart(input: QuoteInput, client: DbClient = db): Promi
         continue;
       }
       const p = v.product;
-      const issue =
-        v.stock <= 0 ? "Sold out in this color." : v.stock < item.quantity ? `Only ${v.stock} left in stock.` : null;
+      const issue = v.stock <= 0 ? "Sold out in this color." : v.stock < item.quantity ? `Only ${v.stock} left in stock.` : null;
       lines.push({
         key,
         kind: "product",
         name: p.name,
         href: `/product/${p.slug}`,
         image: p.images[0] ?? null,
-        color: v.color,
-        sku: v.sku ?? p.sku,
+        colorName: v.color.name,
+        colorHex: v.color.hex,
         unitPrice: p.price,
         compareAtPrice: p.compareAtPrice != null && p.compareAtPrice > p.price ? p.compareAtPrice : null,
         quantity: item.quantity,
@@ -142,7 +134,6 @@ export async function quoteCart(input: QuoteInput, client: DbClient = db): Promi
         issue,
         productId: p.id,
         variantId: v.id,
-        categoryIds: p.categories.map((c) => c.id),
       });
     } else {
       const g = giftBoxById.get(item.giftBoxId);
@@ -152,16 +143,15 @@ export async function quoteCart(input: QuoteInput, client: DbClient = db): Promi
       }
       const maxBoxes = Math.min(...g.items.map((i) => Math.floor(i.variant.stock / Math.max(1, i.quantity))));
       const separateValue = g.items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
-      const issue =
-        maxBoxes <= 0 ? "This gift box is sold out." : maxBoxes < item.quantity ? `Only ${maxBoxes} left in stock.` : null;
+      const issue = maxBoxes <= 0 ? "This gift box is sold out." : maxBoxes < item.quantity ? `Only ${maxBoxes} left in stock.` : null;
       lines.push({
         key,
         kind: "giftbox",
         name: g.name,
         href: `/gift-boxes/${g.slug}`,
         image: g.coverImage,
-        color: null,
-        sku: null,
+        colorName: null,
+        colorHex: null,
         unitPrice: g.price,
         compareAtPrice: separateValue > g.price ? separateValue : null,
         quantity: item.quantity,
@@ -170,12 +160,11 @@ export async function quoteCart(input: QuoteInput, client: DbClient = db): Promi
         available: maxBoxes > 0,
         issue,
         giftBoxId: g.id,
-        categoryIds: [],
         contents: g.items.map((i) => ({
           productId: i.productId,
           variantId: i.variantId,
           name: i.product.name,
-          color: i.variant.color,
+          color: i.variant.color.name,
           quantity: i.quantity,
         })),
       });
@@ -188,13 +177,7 @@ export async function quoteCart(input: QuoteInput, client: DbClient = db): Promi
   let promo: PromoResult | null = null;
   if (input.promoCode?.trim()) {
     promo = billable.length
-      ? await evaluatePromo(
-          input.promoCode,
-          billable.map((l) => ({ kind: l.kind, productId: l.productId, categoryIds: l.categoryIds, lineTotal: l.lineTotal })),
-          subtotal,
-          { email: input.customerEmail, phone: input.customerPhone },
-          client,
-        )
+      ? await evaluatePromo(input.promoCode, subtotal, { email: input.customerEmail, phone: input.customerPhone }, client)
       : { code: input.promoCode.trim().toUpperCase(), applied: false, discount: 0, message: "Add items to use a promo code." };
   }
   const discount = promo?.applied ? Math.min(promo.discount, subtotal) : 0;
@@ -225,8 +208,8 @@ function unavailableLine(key: string, kind: "product" | "giftbox", issue: string
     name: "",
     href: "#",
     image: null,
-    color: null,
-    sku: null,
+    colorName: null,
+    colorHex: null,
     unitPrice: 0,
     compareAtPrice: null,
     quantity: 0,
@@ -234,10 +217,5 @@ function unavailableLine(key: string, kind: "product" | "giftbox", issue: string
     maxQuantity: 0,
     available: false,
     issue,
-    categoryIds: [],
   };
-}
-
-export function colorLabel(color: ColorKey | null) {
-  return color ? COLORS[color].label : null;
 }

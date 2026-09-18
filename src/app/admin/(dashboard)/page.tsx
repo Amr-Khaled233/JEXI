@@ -3,7 +3,6 @@ import { AlertTriangle } from "lucide-react";
 import { EmptyState, OrderStatusBadge, PageTitle, Panel, Table } from "@/components/admin/ui";
 import { ColorSwatch } from "@/components/color-swatch";
 import { Alert } from "@/components/ui/field";
-import { COLORS } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { isEmailConfigured } from "@/lib/email/mailer";
 import { formatMoney } from "@/lib/money";
@@ -23,7 +22,7 @@ export default async function OverviewPage() {
     db.order.count({ where: { status: "PENDING" } }),
     db.variant.findMany({
       where: { stock: { lte: settings.lowStockThreshold } },
-      include: { product: { select: { id: true, name: true, published: true } } },
+      include: { product: { select: { id: true, name: true, published: true } }, color: { select: { name: true, hex: true } } },
       orderBy: { stock: "asc" },
       take: 12,
     }),
@@ -117,9 +116,9 @@ export default async function OverviewPage() {
               {lowStock.map((v) => (
                 <li key={v.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
                   <Link href={`/admin/products/${v.product.id}`} className="flex min-w-0 items-center gap-2 hover:text-gold">
-                    <ColorSwatch color={v.color} />
+                    <ColorSwatch hex={v.color.hex} />
                     <span className="truncate">
-                      {v.product.name} <span className="text-muted">· {COLORS[v.color].label}</span>
+                      {v.product.name} <span className="text-muted">· {v.color.name}</span>
                     </span>
                   </Link>
                   <span className={v.stock === 0 ? "inline-flex items-center gap-1 text-danger" : "text-warning"}>

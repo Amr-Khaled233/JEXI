@@ -17,7 +17,7 @@ export const metadata: Metadata = { title: "Products" };
 export default async function ProductsPage({ searchParams }: { searchParams: Promise<{ q?: string; category?: string; status?: string }> }) {
   const { q = "", category = "", status = "" } = await searchParams;
   const where: Prisma.ProductWhereInput = {
-    ...(q ? { OR: [{ name: { contains: q, mode: "insensitive" } }, { sku: { contains: q, mode: "insensitive" } }] } : {}),
+    ...(q ? { OR: [{ name: { contains: q, mode: "insensitive" } }, { description: { contains: q, mode: "insensitive" } }] } : {}),
     ...(category ? { categories: { some: { id: category } } } : {}),
     ...(status === "published" ? { published: true } : status === "draft" ? { published: false } : {}),
   };
@@ -26,7 +26,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     db.product.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      include: { variants: { orderBy: { color: "asc" } }, categories: { select: { name: true } } },
+      include: { variants: { include: { color: true }, orderBy: { color: { sortOrder: "asc" } } }, categories: { select: { name: true } } },
     }),
     db.category.findMany({ orderBy: { sortOrder: "asc" }, select: { id: true, name: true } }),
     getSettings(),
@@ -37,7 +37,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       <PageTitle title="Products" description={`${products.length} products`} action={{ href: "/admin/products/new", label: "Add product" }} />
 
       <form className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_12rem_10rem_auto]">
-        <Input name="q" defaultValue={q} placeholder="Search name or SKU" className="h-10" aria-label="Search products" />
+        <Input name="q" defaultValue={q} placeholder="Search products" className="h-10" aria-label="Search products" />
         <Select name="category" defaultValue={category} className="h-10" aria-label="Category">
           <option value="">All categories</option>
           {categories.map((c) => (
@@ -75,15 +75,13 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             {products.map((p) => (
               <tr key={p.id}>
                 <td>
-                  <Link href={`/admin/products/${p.id}`} className="flex items-center gap-3 hover:text-gold">
-                    <span className="relative aspect-4/5 w-10 shrink-0 overflow-hidden rounded-[2px] bg-surface-2">
-                      {p.images[0] && <Image src={p.images[0]} alt="" fill sizes="40px" className="object-cover" />}
+                  <Link href={`/admin/products/${p.id}`} className="flex items-center gap-4 hover:text-gold">
+                    <span className="relative aspect-4/5 w-16 shrink-0 overflow-hidden rounded-[3px] bg-surface-2 ring-1 ring-border">
+                      {p.images[0] && <Image src={p.images[0]} alt="" fill sizes="64px" className="object-cover" />}
                     </span>
                     <span>
                       <span className="font-medium">{p.name}</span>
-                      <span className="block text-xs text-muted">
-                        {p.sku} · {p.categories.map((c) => c.name).join(", ") || "No category"}
-                      </span>
+                      <span className="block text-xs text-muted">{p.categories.map((c) => c.name).join(", ") || "No category"}</span>
                     </span>
                   </Link>
                 </td>
@@ -94,7 +92,8 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                   <div className="flex flex-col gap-1">
                     {p.variants.map((v) => (
                       <span key={v.id} className="inline-flex items-center gap-1.5 text-xs">
-                        <ColorSwatch color={v.color} className="size-3" />
+                        <ColorSwatch hex={v.color.hex} name={v.color.name} className="size-3" />
+                        <span className="text-muted">{v.color.name}</span>
                         <span className={v.stock === 0 ? "text-danger" : v.stock <= settings.lowStockThreshold ? "text-warning" : ""}>{v.stock}</span>
                       </span>
                     ))}

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { ProductForm } from "@/components/admin/product-form";
 import { PageTitle } from "@/components/admin/ui";
+import { getColors } from "@/lib/admin-data";
 import { db } from "@/lib/db";
 import { fromMinor } from "@/lib/money";
 
@@ -11,11 +12,13 @@ export const metadata: Metadata = { title: "Edit product" };
 
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [product, categories] = await Promise.all([
+  const [product, categories, colors] = await Promise.all([
     db.product.findUnique({ where: { id }, include: { variants: true, categories: { select: { id: true } } } }),
     db.category.findMany({ orderBy: { sortOrder: "asc" }, select: { id: true, name: true } }),
+    getColors(),
   ]);
   if (!product) notFound();
+  const onSale = product.compareAtPrice != null && product.compareAtPrice > product.price;
 
   return (
     <>
@@ -34,19 +37,18 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
       />
       <ProductForm
         categories={categories}
+        colors={colors}
         initial={{
           id: product.id,
           name: product.name,
-          slug: product.slug,
-          sku: product.sku,
           description: product.description,
-          price: String(fromMinor(product.price)),
-          compareAtPrice: product.compareAtPrice != null ? String(fromMinor(product.compareAtPrice)) : "",
+          price: String(fromMinor(onSale ? product.compareAtPrice! : product.price)),
+          salePrice: onSale ? String(fromMinor(product.price)) : "",
           categoryIds: product.categories.map((c) => c.id),
           tags: product.tags,
           published: product.published,
           images: product.images,
-          variants: Object.fromEntries(product.variants.map((v) => [v.color, { stock: String(v.stock), sku: v.sku ?? "" }])),
+          stock: Object.fromEntries(product.variants.map((v) => [v.colorId, String(v.stock)])),
         }}
       />
     </>

@@ -24,9 +24,7 @@ export function PageTitle({ title, description, action }: { title: string; descr
 
 export const ORDER_STATUS_TONES: Record<OrderStatusKey, BadgeTone> = {
   PENDING: "warning",
-  CONFIRMED: "gold",
-  PROCESSING: "gold",
-  SHIPPED: "dark",
+  SHIPPED: "gold",
   DELIVERED: "success",
   CANCELLED: "danger",
 };
@@ -35,10 +33,22 @@ export function OrderStatusBadge({ status }: { status: OrderStatusKey }) {
   return <Badge tone={ORDER_STATUS_TONES[status]}>{ORDER_STATUSES[status].label}</Badge>;
 }
 
+/** Grid-style table: every cell is bordered, header row is shaded, rows highlight on hover. */
 export function Table({ children, className, compact }: { children: React.ReactNode; className?: string; compact?: boolean }) {
   return (
-    <div className={cn("card overflow-x-auto", className)}>
-      <table className={cn("w-full text-left text-sm", !compact && "min-w-160", "[&_td]:px-4 [&_td]:py-3 [&_th]:px-4 [&_th]:py-3 [&_th]:text-[0.65rem] [&_th]:font-medium [&_th]:tracking-[0.16em] [&_th]:text-muted [&_th]:uppercase [&_tbody_tr]:border-t [&_tbody_tr]:border-border")}>
+    <div className={cn("overflow-x-auto rounded-lg border border-border bg-surface", className)}>
+      <table
+        className={cn(
+          "w-full border-collapse text-left text-sm",
+          !compact && "min-w-160",
+          // Cells
+          "[&_td]:border [&_td]:border-border [&_td]:px-4 [&_td]:py-3 [&_td]:align-middle",
+          "[&_th]:border [&_th]:border-border [&_th]:bg-surface-2 [&_th]:px-4 [&_th]:py-3 [&_th]:text-[0.65rem] [&_th]:font-medium [&_th]:tracking-[0.16em] [&_th]:text-muted [&_th]:uppercase",
+          // Hide the outer edge (the wrapper draws it) so borders don't double up.
+          "[&_tr>*:first-child]:border-l-0 [&_tr>*:last-child]:border-r-0 [&_thead_tr>*]:border-t-0 [&_tbody_tr:last-child>*]:border-b-0",
+          "[&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-surface-2/50",
+        )}
+      >
         {children}
       </table>
     </div>

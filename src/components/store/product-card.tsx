@@ -9,7 +9,7 @@ import { TAGS } from "@/lib/constants";
 export function ProductCard({ product, priority }: { product: ProductCardData; priority?: boolean }) {
   const [first, second] = product.images;
   const soldOut = product.variants.every((v) => v.stock <= 0);
-  const colors = [...new Set(product.variants.map((v) => v.color))];
+  const colors = [...new Map(product.variants.map((v) => [v.color.id, v.color])).values()];
 
   return (
     <Link href={`/product/${product.slug}`} className="group block">
@@ -51,7 +51,7 @@ export function ProductCard({ product, priority }: { product: ProductCardData; p
           <Price price={product.price} compareAt={product.compareAtPrice} size="sm" />
           <span className="flex gap-1">
             {colors.map((c) => (
-              <ColorSwatch key={c} color={c} className="size-3" />
+              <ColorSwatch key={c.id} hex={c.hex} name={c.name} className="size-3" />
             ))}
           </span>
         </div>

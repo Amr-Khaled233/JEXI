@@ -26,7 +26,6 @@ export default async function EditGiftBoxPage({ params }: { params: Promise<{ id
         initial={{
           id: box.id,
           name: box.name,
-          slug: box.slug,
           description: box.description,
           coverImage: box.coverImage,
           price: String(fromMinor(box.price)),

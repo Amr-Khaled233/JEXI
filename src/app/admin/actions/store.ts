@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
-import { hashPassword, requireAdmin, requireOwner, startSession, verifyPassword } from "@/lib/auth";
+import { hashPassword, requireAdmin, requireOwner } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { parseMoneyInput, toMinor } from "@/lib/money";
 
@@ -28,15 +28,11 @@ const promoSchema = z
     usageLimit: z.number().int().positive().nullable(),
     perCustomerLimit: z.number().int().positive().nullable(),
     minOrderValue: z.number().positive().nullable(),
-    scope: z.enum(["ALL", "CATEGORY", "PRODUCTS"]),
-    categoryIds: z.array(z.string()),
-    productIds: z.array(z.string()),
     active: z.boolean(),
   })
   .refine((p) => p.discountType !== "PERCENTAGE" || p.value <= 100, { message: "A percentage discount can't exceed 100%." })
   .refine((p) => new Date(p.endsAt) > new Date(p.startsAt), { message: "The end date must be after the start date." })
-  .refine((p) => p.scope !== "CATEGORY" || p.categoryIds.length > 0, { message: "Choose at least one category." })
-  .refine((p) => p.scope !== "PRODUCTS" || p.productIds.length > 0, { message: "Choose at least one product." });
+;
 
 export type PromoPayload = z.input<typeof promoSchema>;
 
@@ -56,15 +52,12 @@ export async function savePromoCodeAction(id: string | null, payload: PromoPaylo
     usageLimit: p.usageLimit,
     perCustomerLimit: p.perCustomerLimit,
     minOrderValue: p.minOrderValue != null ? toMinor(p.minOrderValue) : null,
-    scope: p.scope,
     active: p.active,
   };
-  const categories = p.scope === "CATEGORY" ? p.categoryIds.map((cid) => ({ id: cid })) : [];
-  const products = p.scope === "PRODUCTS" ? p.productIds.map((pid) => ({ id: pid })) : [];
 
   try {
-    if (id) await db.promoCode.update({ where: { id }, data: { ...data, categories: { set: categories }, products: { set: products } } });
-    else await db.promoCode.create({ data: { ...data, categories: { connect: categories }, products: { connect: products } } });
+    if (id) await db.promoCode.update({ where: { id }, data });
+    else await db.promoCode.create({ data });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") return { error: "This code already exists." };
     throw err;
@@ -130,6 +123,11 @@ const optionalText = (max: number) =>
     .max(max)
     .transform((s) => s || null);
 
+const socialHandle = optionalText(200).refine(
+  (v) => !v || /^(@?[\w.-]{1,100}|https:\/\/[^\s<>"']+)$/.test(v),
+  "Enter a username (like jexi.accessories) or a full https link.",
+);
+
 const settingsSchema = z.object({
   storeName: z.string().trim().min(1).max(80),
   tagline: optionalText(200),
@@ -137,7 +135,9 @@ const settingsSchema = z.object({
   contactEmail: optionalText(200).refine((v) => !v || z.email().safeParse(v).success, "Invalid contact email."),
   contactPhone: optionalText(30),
   whatsapp: optionalText(30),
-  instagram: optionalText(60),
+  instagram: socialHandle,
+  facebook: socialHandle,
+  tiktok: socialHandle,
   notificationEmail: optionalText(200).refine((v) => !v || z.email().safeParse(v).success, "Invalid notification email."),
   defaultTheme: z.enum(["dark", "light", "system"]),
   lowStockThreshold: z.coerce.number().int().min(0).max(1000),
@@ -148,30 +148,58 @@ export async function saveSettingsAction(_prev: ActionResult, formData: FormData
   const parsed = settingsSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  // Password-reset links are sent to the notification email, so letting Staff change
-  // it would let them reset the Owner's password. Only the Owner may change it.
+  // New-order alerts contain customer details, so only the Owner decides where they go.
   const current = await db.storeSettings.findUnique({ where: { id: 1 }, select: { notificationEmail: true } });
   if (me.role !== "OWNER" && parsed.data.notificationEmail !== (current?.notificationEmail ?? null)) {
     return { error: "Only the store owner can change the notification email." };
   }
-
-  const thresholdRaw = String(formData.get("freeShippingThreshold") ?? "").trim();
-  const threshold = thresholdRaw ? parseMoneyInput(thresholdRaw) : null;
-  if (thresholdRaw && threshold == null) return { error: "Invalid free-shipping threshold." };
-  const defaultFee = parseMoneyInput(String(formData.get("defaultShippingFee") ?? "0")) ?? 0;
 
   await db.storeSettings.upsert({
     where: { id: 1 },
     create: { id: 1 },
     update: {
       ...parsed.data,
-      freeShippingEnabled: formData.get("freeShippingEnabled") === "on",
-      freeShippingThreshold: threshold,
-      defaultShippingFee: defaultFee,
+      showInstagram: formData.get("showInstagram") === "on",
+      showFacebook: formData.get("showFacebook") === "on",
+      showTiktok: formData.get("showTiktok") === "on",
     },
   });
   revalidatePath("/", "layout");
   return { success: "Settings saved." };
+}
+
+// ─── Free shipping ────────────────────────────────────────
+
+const freeShippingSchema = z
+  .object({
+    enabled: z.boolean(),
+    startsAt: z.iso.datetime().nullable(),
+    endsAt: z.iso.datetime().nullable(),
+    minimum: z.number().positive("The minimum order must be greater than zero.").nullable(),
+    defaultFee: z.number().min(0, "The shipping fee can't be negative."),
+  })
+  .refine((f) => !f.startsAt || !f.endsAt || new Date(f.endsAt) > new Date(f.startsAt), { message: "The end date must be after the start date." });
+
+export type FreeShippingPayload = z.input<typeof freeShippingSchema>;
+
+export async function saveFreeShippingAction(payload: FreeShippingPayload): Promise<ActionResult> {
+  await requireAdmin();
+  const parsed = freeShippingSchema.safeParse(payload);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const f = parsed.data;
+  await db.storeSettings.upsert({
+    where: { id: 1 },
+    create: { id: 1 },
+    update: {
+      freeShippingEnabled: f.enabled,
+      freeShippingStartsAt: f.startsAt ? new Date(f.startsAt) : null,
+      freeShippingEndsAt: f.endsAt ? new Date(f.endsAt) : null,
+      freeShippingThreshold: f.minimum != null ? toMinor(f.minimum) : null,
+      defaultShippingFee: toMinor(f.defaultFee),
+    },
+  });
+  revalidatePath("/", "layout");
+  return { success: "Free shipping saved." };
 }
 
 // ─── Admin users ──────────────────────────────────────────
@@ -204,20 +232,4 @@ export async function deleteAdminAction(formData: FormData) {
   if (id === me.id) return;
   await db.adminUser.delete({ where: { id } });
   revalidatePath("/admin/settings");
-}
-
-export async function changePasswordAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
-  const me = await requireAdmin();
-  const current = String(formData.get("current") ?? "");
-  const next = String(formData.get("next") ?? "");
-  if (next.length < 10) return { error: "New password must be at least 10 characters." };
-  const admin = await db.adminUser.findUnique({ where: { id: me.id } });
-  if (!admin || !(await verifyPassword(current, admin.passwordHash))) return { error: "Current password is incorrect." };
-  // Bumping the version signs out every other session; re-issue this one so you stay signed in.
-  const updated = await db.adminUser.update({
-    where: { id: me.id },
-    data: { passwordHash: await hashPassword(next), sessionVersion: { increment: 1 } },
-  });
-  await startSession("admin", me.id, updated.sessionVersion);
-  return { success: "Password updated. Other devices have been signed out." };
 }

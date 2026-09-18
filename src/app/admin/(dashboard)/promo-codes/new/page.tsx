@@ -1,15 +1,10 @@
 import type { Metadata } from "next";
 import { PromoForm } from "@/components/admin/promo-form";
 import { PageTitle } from "@/components/admin/ui";
-import { db } from "@/lib/db";
 
 export const metadata: Metadata = { title: "New promo code" };
 
-export default async function NewPromoPage() {
-  const [categories, products] = await Promise.all([
-    db.category.findMany({ orderBy: { sortOrder: "asc" }, select: { id: true, name: true } }),
-    db.product.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
-  ]);
+export default function NewPromoPage() {
   const now = new Date();
   now.setMinutes(0, 0, 0);
   const inAMonth = new Date(now.getTime() + 30 * 86_400_000);
@@ -18,8 +13,6 @@ export default async function NewPromoPage() {
     <>
       <PageTitle title="New promo code" />
       <PromoForm
-        categories={categories}
-        products={products}
         initial={{
           code: "",
           description: "",
@@ -30,9 +23,6 @@ export default async function NewPromoPage() {
           usageLimit: "100",
           perCustomerLimit: "1",
           minOrderValue: "",
-          scope: "ALL",
-          categoryIds: [],
-          productIds: [],
           active: true,
         }}
       />
