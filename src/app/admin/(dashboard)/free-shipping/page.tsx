@@ -17,7 +17,6 @@ export default async function FreeShippingPage() {
           startsAt: s.freeShippingStartsAt?.toISOString() ?? null,
           endsAt: s.freeShippingEndsAt?.toISOString() ?? null,
           minimum: s.freeShippingThreshold != null ? String(fromMinor(s.freeShippingThreshold)) : "",
-          defaultFee: String(fromMinor(s.defaultShippingFee)),
         }}
       />
     </>

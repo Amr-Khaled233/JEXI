@@ -36,7 +36,7 @@ export function ShippingZoneRow({ zone }: { zone: Zone }) {
         </button>
       </td>
       <td>
-        <Input form={formId} name="fee" type="number" min={0} step="0.01" placeholder="Default" defaultValue={zone.fee} className="h-9 w-28" aria-label={`${zone.name} fee`} />
+        <Input form={formId} name="fee" type="number" min={0} step="0.01" placeholder="Free" defaultValue={zone.fee} className="h-9 w-28" aria-label={`${zone.name} fee`} />
       </td>
       <td>
         <Input form={formId} name="estimatedDelivery" placeholder="e.g. 2 to 4 business days" defaultValue={zone.estimatedDelivery} className="h-9 min-w-44" aria-label={`${zone.name} delivery estimate`} />

@@ -292,8 +292,6 @@ model StoreSettings {
   freeShippingEndsAt    DateTime?
   // piastres; when set, orders at or above it ship free even to zones with a fee.
   freeShippingThreshold Int?
-  // piastres; charged when free shipping is off and the zone has no fee override.
-  defaultShippingFee    Int       @default(0)
   defaultTheme          String    @default("dark") // "dark" | "light" | "system"
   lowStockThreshold     Int       @default(3)
 }

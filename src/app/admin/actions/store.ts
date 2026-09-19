@@ -176,7 +176,6 @@ const freeShippingSchema = z
     startsAt: z.iso.datetime().nullable(),
     endsAt: z.iso.datetime().nullable(),
     minimum: z.number().positive("The minimum order must be greater than zero.").nullable(),
-    defaultFee: z.number().min(0, "The shipping fee can't be negative."),
   })
   .refine((f) => !f.startsAt || !f.endsAt || new Date(f.endsAt) > new Date(f.startsAt), { message: "The end date must be after the start date." });
 
@@ -195,7 +194,6 @@ export async function saveFreeShippingAction(payload: FreeShippingPayload): Prom
       freeShippingStartsAt: f.startsAt ? new Date(f.startsAt) : null,
       freeShippingEndsAt: f.endsAt ? new Date(f.endsAt) : null,
       freeShippingThreshold: f.minimum != null ? toMinor(f.minimum) : null,
-      defaultShippingFee: toMinor(f.defaultFee),
     },
   });
   revalidatePath("/", "layout");

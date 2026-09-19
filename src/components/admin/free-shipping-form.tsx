@@ -13,7 +13,6 @@ export type FreeShippingValues = {
   startsAt: string | null; // ISO
   endsAt: string | null; // ISO
   minimum: string; // EGP
-  defaultFee: string; // EGP
 };
 
 /** ISO → value for <input type="datetime-local"> in the admin's time zone. */
@@ -36,16 +35,15 @@ export function FreeShippingForm({ initial }: { initial: FreeShippingValues }) {
   const starts = useDates && v.startsAt ? new Date(v.startsAt) : null;
   const ends = useDates && v.endsAt ? new Date(v.endsAt) : null;
   const min = useMinimum && Number(v.minimum) > 0 ? toMinor(Number(v.minimum)) : null;
-  const fee = toMinor(Number(v.defaultFee) || 0);
   let status: { label: string; tone: "on" | "soon" | "off"; text: string };
-  if (!v.enabled) status = { label: "Off", tone: "off", text: `Every order pays shipping (${formatMoney(fee)} unless a governorate has its own fee).` };
+  if (!v.enabled) status = { label: "Off", tone: "off", text: "Every order pays its governorate's shipping fee from Shipping Zones." };
   else if (starts && now < starts) status = { label: "Scheduled", tone: "soon", text: `Starts ${formatDate(starts, true)}.` };
   else if (ends && now > ends) status = { label: "Ended", tone: "off", text: `Ended ${formatDate(ends, true)}. Orders pay shipping again.` };
   else
     status = {
       label: "Running now",
       tone: "on",
-      text: `${min ? `Orders over ${formatMoney(min)}` : "All orders"} ship free${ends ? ` until ${formatDate(ends, true)}` : ""}.${min ? ` Smaller orders pay ${formatMoney(fee)}.` : ""}`,
+      text: `${min ? `Orders over ${formatMoney(min)}` : "All orders"} ship free${ends ? ` until ${formatDate(ends, true)}` : ""}.${min ? " Smaller orders pay their governorate's shipping fee." : ""}`,
     };
 
   const submit = (e: React.FormEvent) => {
@@ -57,7 +55,6 @@ export function FreeShippingForm({ initial }: { initial: FreeShippingValues }) {
         startsAt: useDates && v.startsAt ? v.startsAt : null,
         endsAt: useDates && v.endsAt ? v.endsAt : null,
         minimum: useMinimum && v.minimum.trim() ? Number(v.minimum) : null,
-        defaultFee: Number(v.defaultFee) || 0,
       });
       setMessage(res?.error ? { tone: "error", text: res.error } : { tone: "success", text: res?.success ?? "Saved." });
     });
@@ -127,10 +124,14 @@ export function FreeShippingForm({ initial }: { initial: FreeShippingValues }) {
           <p className="mt-3 text-sm leading-relaxed">{status.text}</p>
         </Panel>
 
-        <Panel title="Regular shipping fee">
-          <Field label="Fee (EGP)" htmlFor="defaultFee" hint="Charged when an order doesn't get free shipping. Governorates can have their own fee in Shipping Zones.">
-            <Input id="defaultFee" type="number" min={0} step="0.01" value={v.defaultFee} onChange={(e) => set("defaultFee", e.target.value)} />
-          </Field>
+        <Panel title="Shipping fees">
+          <p className="text-sm leading-relaxed text-muted">
+            Orders that don&apos;t get free shipping pay the fee you set for their governorate in{" "}
+            <a href="/admin/shipping" className="text-gold underline underline-offset-2">
+              Shipping Zones
+            </a>
+            . A governorate with no fee ships free.
+          </p>
         </Panel>
 
         {message && <Alert tone={message.tone}>{message.text}</Alert>}

@@ -5,7 +5,7 @@ import { ShippingZoneRow } from "@/components/admin/shipping-zone-row";
 import { PageTitle, Table } from "@/components/admin/ui";
 import { Alert } from "@/components/ui/field";
 import { db } from "@/lib/db";
-import { formatMoney, fromMinor } from "@/lib/money";
+import { fromMinor } from "@/lib/money";
 import { getSettings } from "@/lib/settings";
 import { freeShippingOffer } from "@/lib/shipping";
 
@@ -20,7 +20,7 @@ export default async function ShippingPage() {
       <PageTitle title="Shipping Zones" description={`${enabled} of ${zones.length} governorates are visible at checkout.`} />
       <Alert tone="info" className="mb-6">
         {freeShippingOffer(settings).active ? "A free-shipping offer is running, so qualifying orders ship free everywhere. " : ""}
-        Each governorate charges the fee set below, or the default of {formatMoney(settings.defaultShippingFee)} when it&apos;s left blank. Manage free shipping and the default fee in the{" "}
+        Each governorate charges the fee you set below. Leave it empty to ship there for free. Free-shipping offers are managed in the{" "}
         <Link href="/admin/free-shipping" className="underline underline-offset-2">
           Free Shipping
         </Link>{" "}

@@ -7,7 +7,6 @@ type ShippingSettings = {
   freeShippingStartsAt: Date | null;
   freeShippingEndsAt: Date | null;
   freeShippingThreshold: number | null;
-  defaultShippingFee: number;
 };
 
 export type ShippingQuote = {
@@ -42,7 +41,7 @@ export function freeShippingMessage(settings: ShippingSettings) {
  * Shipping rules:
  * 1. Free when the free-shipping offer is on, today is inside its dates (if set),
  *    and the order after discount reaches its minimum (if set).
- * 2. Otherwise the governorate's own fee, or the store's default fee.
+ * 2. Otherwise the fee set for the governorate in Shipping Zones (blank = free).
  */
 export function computeShipping(settings: ShippingSettings, zone: ZoneLike | null, merchandiseTotal: number, requestedZone?: string | null): ShippingQuote {
   const offer = freeShippingOffer(settings);
@@ -67,7 +66,7 @@ export function computeShipping(settings: ShippingSettings, zone: ZoneLike | nul
     return { fee: 0, free: false, label: "Unavailable", zone: zone.name, estimatedDelivery: null, available: false, pending: false };
   }
 
-  const fee = qualifiesForFree ? 0 : (zone.fee ?? settings.defaultShippingFee);
+  const fee = qualifiesForFree ? 0 : (zone.fee ?? 0);
   return {
     fee,
     free: fee === 0,

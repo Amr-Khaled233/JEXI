@@ -119,7 +119,7 @@ Free shipping is managed in its own **Free Shipping** tab:
 - Optionally limit it to a date range (start and/or end).
 - Optionally apply it only to orders over a minimum amount (after any promo discount).
 
-When an order doesn't get free shipping, it pays its governorate's fee from **Shipping Zones**, or the regular fee set in the Free Shipping tab if the governorate has none. Governorates switched off in Shipping Zones don't appear at checkout.
+When an order doesn't get free shipping, it pays the fee you set for its governorate in **Shipping Zones**. A governorate with no fee ships free. Governorates switched off in Shipping Zones don't appear at checkout.
 
 ### Products, colors and categories
 - A product has a **Price** and an optional **Sale price**. When a sale price is set, customers pay it, the regular price is shown struck through, and the Sale badge is added automatically.
