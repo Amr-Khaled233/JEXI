@@ -32,7 +32,7 @@ export function CartDrawer() {
   const empty = items.length === 0;
 
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Shopping cart">
+    <div className="fixed inset-x-0 top-0 z-50 h-dvh" role="dialog" aria-modal="true" aria-label="Shopping cart">
       <div className="animate-fade-in absolute inset-0 bg-overlay" onClick={closeCart} />
       <aside className="animate-slide-in-right absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-bg shadow-2xl">
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
@@ -59,7 +59,7 @@ export function CartDrawer() {
             <div className="flex-1 overflow-y-auto px-5">
               <CartLines quote={quote} compact onNavigate={closeCart} />
             </div>
-            <div className="space-y-4 border-t border-border bg-surface px-5 py-5">
+            <div className="space-y-4 border-t border-border bg-surface px-5 pt-5 pb-[calc(env(safe-area-inset-bottom)+1.75rem)]">
               <PromoCodeInput quote={quote} />
               <OrderTotals quote={quote} className={loading ? "opacity-60" : undefined} />
               <div className="grid grid-cols-2 gap-2">

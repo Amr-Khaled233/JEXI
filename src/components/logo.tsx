@@ -18,7 +18,7 @@ export function Logo({ size = "md", className }: { size?: keyof typeof SIZES; cl
       </span>
       <span className={cn("flex items-center justify-center", s.rule)} aria-hidden>
         <span className="h-px flex-1 bg-gold/80" />
-        <span className="mx-1 size-[3px] rounded-full bg-gold" />
+        <span className="mx-1 size-0.75 rounded-full bg-gold" />
         <span className="h-px flex-1 bg-gold/80" />
       </span>
       <span className={cn("font-sans text-gold uppercase", s.sub)} style={{ marginRight: "-0.55em" }}>

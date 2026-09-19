@@ -43,7 +43,7 @@ export function MobileMenu({ categories }: { categories: { id: string; name: str
           trap this "fixed" overlay inside the header's own box. */}
       {open &&
         createPortal(
-        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Menu">
+        <div className="fixed inset-x-0 top-0 z-50 h-dvh md:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="animate-fade-in absolute inset-0 bg-overlay" onClick={() => setOpen(false)} />
           <div className="animate-slide-in-right absolute inset-y-0 right-0 flex w-[85%] max-w-sm flex-col bg-bg shadow-2xl">
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
@@ -63,7 +63,7 @@ export function MobileMenu({ categories }: { categories: { id: string; name: str
                 ))}
               </ul>
             </nav>
-            <div className="border-t border-border px-5 py-4">
+            <div className="border-t border-border px-5 pt-4 pb-[calc(env(safe-area-inset-bottom)+1.75rem)]">
               <Link href="/track" className="flex items-center gap-3 py-2 text-xs tracking-[0.18em] uppercase hover:text-gold">
                 <PackageSearch className="size-4" strokeWidth={1.5} /> Track your order
               </Link>

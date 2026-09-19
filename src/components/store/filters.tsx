@@ -174,7 +174,7 @@ export function MobileFilters({ categories, colors }: { categories?: Category[];
         <SlidersHorizontal className="size-3.5" /> Filter{count ? ` (${count})` : ""}
       </Button>
       {open && (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
+        <div className="fixed inset-x-0 top-0 z-50 h-dvh lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
           <div className="animate-fade-in absolute inset-0 bg-overlay" onClick={() => setOpen(false)} />
           <div className="animate-slide-in-left absolute inset-y-0 left-0 flex w-[85%] max-w-sm flex-col bg-bg">
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
@@ -186,7 +186,7 @@ export function MobileFilters({ categories, colors }: { categories?: Category[];
             <div className="flex-1 overflow-y-auto px-5 py-6">
               <FilterPanel categories={categories} colors={colors} />
             </div>
-            <div className="border-t border-border p-4">
+            <div className="border-t border-border px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+1.75rem)]">
               <Button type="button" className="w-full" onClick={() => setOpen(false)}>
                 Show results
               </Button>

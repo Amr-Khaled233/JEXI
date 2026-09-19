@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Pencil, ToggleLeft, ToggleRight } from "lucide-react";
 import { togglePromoCodeAction } from "@/app/admin/actions/store";
 import { EmptyState, PageTitle, Table } from "@/components/admin/ui";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
+import { buttonClasses } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/money";
 import { PROMO_STATUS_LABELS, promoStatus, type PromoStatus } from "@/lib/promo";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Promo Codes" };
 
@@ -29,7 +31,7 @@ export default async function PromoCodesPage() {
               <th>Valid</th>
               <th>Used</th>
               <th>Status</th>
-              <th />
+              <th className="w-28">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -37,7 +39,8 @@ export default async function PromoCodesPage() {
               const status = promoStatus(p);
               const pct = p.usageLimit ? Math.min(100, (p.usedCount / p.usageLimit) * 100) : 0;
               return (
-                <tr key={p.id}>
+                // Codes that can't be used right now are dimmed (the Actions cell stays bright).
+                <tr key={p.id} className={cn(status !== "ACTIVE" && "[&>td:not(:last-child)]:opacity-40")}>
                   <td>
                     <Link href={`/admin/promo-codes/${p.id}`} className="font-medium tracking-wider hover:text-gold">
                       {p.code}
@@ -68,13 +71,23 @@ export default async function PromoCodesPage() {
                   <td>
                     <Badge tone={TONES[status]}>{PROMO_STATUS_LABELS[status]}</Badge>
                   </td>
-                  <td className="text-right">
-                    <form action={togglePromoCodeAction}>
-                      <input type="hidden" name="id" value={p.id} />
-                      <button type="submit" className="text-xs tracking-[0.12em] text-muted uppercase hover:text-gold">
-                        {p.active ? "Deactivate" : "Activate"}
-                      </button>
-                    </form>
+                  <td>
+                    <div className="flex items-center gap-1">
+                      <Link href={`/admin/promo-codes/${p.id}`} aria-label={`Edit ${p.code}`} title="Edit code" className={buttonClasses("ghost", "sm", "px-2.5")}>
+                        <Pencil className="size-3.5" />
+                      </Link>
+                      <form action={togglePromoCodeAction}>
+                        <input type="hidden" name="id" value={p.id} />
+                        <button
+                          type="submit"
+                          aria-label={p.active ? `Deactivate ${p.code}` : `Activate ${p.code}`}
+                          title={p.active ? "Active. Click to deactivate" : "Inactive. Click to activate"}
+                          className={cn("flex h-9 items-center rounded-[3px] px-2 transition hover:bg-surface-2", p.active ? "text-gold" : "text-muted hover:text-fg")}
+                        >
+                          {p.active ? <ToggleRight className="size-6" strokeWidth={1.5} /> : <ToggleLeft className="size-6" strokeWidth={1.5} />}
+                        </button>
+                      </form>
+                    </div>
                   </td>
                 </tr>
               );

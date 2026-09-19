@@ -6,7 +6,7 @@ import { deleteColorAction, saveColorAction } from "@/app/admin/actions/catalog"
 import { Table } from "@/components/admin/ui";
 import { ColorSwatch } from "@/components/color-swatch";
 import { Button } from "@/components/ui/button";
-import { Alert, Input } from "@/components/ui/field";
+import { Input } from "@/components/ui/field";
 
 type Color = { id: string; name: string; hex: string; variantCount: number };
 
@@ -91,7 +91,6 @@ export function ColorsManager({ colors }: { colors: Color[] }) {
         <p className="mb-3 text-xs tracking-[0.14em] text-muted uppercase">Add a new color</p>
         <ColorFields />
       </div>
-      <Alert tone="info">Colors can also be added while editing a product. A color can only be deleted once no product uses it.</Alert>
     </div>
   );
 }

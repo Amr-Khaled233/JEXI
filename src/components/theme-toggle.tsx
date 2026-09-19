@@ -23,11 +23,11 @@ export function ThemeToggle({ className }: { className?: string }) {
       className={cn("inline-flex size-10 items-center justify-center rounded-full text-fg transition hover:text-gold", className)}
     >
       {!mounted ? (
-        <span className="size-[18px]" />
+        <span className="size-4.5" />
       ) : dark ? (
-        <Sun className="size-[18px]" strokeWidth={1.5} />
+        <Sun className="size-4.5" strokeWidth={1.5} />
       ) : (
-        <Moon className="size-[18px]" strokeWidth={1.5} />
+        <Moon className="size-4.5" strokeWidth={1.5} />
       )}
     </button>
   );
