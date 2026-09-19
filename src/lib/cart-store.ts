@@ -12,6 +12,8 @@ type CartState = {
   items: CartItemInput[];
   promoCode: string | null;
   isOpen: boolean;
+  /** Timestamp of the last add, used to show the "Added to your cart" notice. */
+  lastAddedAt: number;
   add: (item: CartItemInput) => void;
   setQuantity: (key: string, quantity: number) => void;
   remove: (key: string) => void;
@@ -31,6 +33,7 @@ export const useCart = create<CartState>()(
       items: [],
       promoCode: null,
       isOpen: false,
+      lastAddedAt: 0,
       add: (item) =>
         set((s) => {
           const key = itemKey(item);
@@ -38,7 +41,7 @@ export const useCart = create<CartState>()(
           const items = existing
             ? s.items.map((i) => (itemKey(i) === key ? { ...i, quantity: Math.min(20, i.quantity + item.quantity) } : i))
             : [...s.items, item];
-          return { items, isOpen: true };
+          return { items, lastAddedAt: Date.now() };
         }),
       setQuantity: (key, quantity) =>
         set((s) => ({

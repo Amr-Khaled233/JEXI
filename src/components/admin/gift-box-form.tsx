@@ -138,7 +138,7 @@ export function GiftBoxForm({ initial, products }: { initial: GiftBoxFormValues;
 
       <div className="space-y-6">
         <Panel title="Cover image">
-          <ImageUploader value={v.coverImage ? [v.coverImage] : []} onChange={(imgs) => set("coverImage", imgs[0] ?? "")} max={1} />
+          <ImageUploader value={v.coverImage ? [v.coverImage] : []} onChange={(imgs) => set("coverImage", imgs[0] ?? "")} max={1} hint={<><span className="font-medium text-fg">Best size: 1200 x 1500 px</span> (portrait, 4:5), the same shape as the gift box cards in the store. Smaller photos may look blurry. JPG, PNG or WebP, up to 8 MB.</>} />
         </Panel>
         <Panel title="Pricing (EGP)">
           <Field label="Bundle price" htmlFor="price">

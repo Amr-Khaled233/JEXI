@@ -17,7 +17,7 @@ export function CartButton() {
     >
       <ShoppingCart className="size-4.75" strokeWidth={1.5} />
       {hydrated && count > 0 && (
-        <span className="absolute top-0.5 right-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[0.6rem] font-medium text-on-gold tabular-nums">
+        <span key={count} className="animate-pop absolute top-0.5 right-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[0.6rem] font-medium text-on-gold tabular-nums">
           {count}
         </span>
       )}

@@ -97,7 +97,7 @@ export function ProductForm({ initial, categories, colors: initialColors }: { in
         </Panel>
 
         <Panel title="Images">
-          <ImageUploader value={v.images} onChange={(images) => set("images", images)} />
+          <ImageUploader value={v.images} onChange={(images) => set("images", images)} hint={<><span className="font-medium text-fg">Best size: 1200 x 1500 px</span> (portrait, 4:5), the same shape as the product cards in the store. Smaller photos may look blurry. JPG, PNG or WebP, up to 8 MB. The first photo is the cover.</>} />
         </Panel>
 
         <Panel title="Colors & stock">

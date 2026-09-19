@@ -81,12 +81,27 @@ export function AddToCart({ variants, lowStockThreshold }: { variants: Variant[]
 export function AddGiftBoxToCart({ giftBoxId, stock }: { giftBoxId: string; stock: number }) {
   const add = useCart((s) => s.add);
   const [quantity, setQuantity] = useState(1);
+  const [added, setAdded] = useState(false);
   const soldOut = stock <= 0;
   return (
     <div className="flex gap-3">
       <QuantityStepper value={quantity} max={Math.max(1, Math.min(stock, 20))} onChange={(q) => setQuantity(Math.max(1, q))} disabled={soldOut} size="md" />
-      <Button type="button" size="lg" className="h-11 min-w-0 flex-1" disabled={soldOut} onClick={() => add({ kind: "giftbox", giftBoxId, quantity })}>
-        {soldOut ? "Sold out" : "Add to cart"}
+      <Button type="button" size="lg" className="h-11 min-w-0 flex-1" disabled={soldOut}
+        onClick={() => {
+          add({ kind: "giftbox", giftBoxId, quantity });
+          setAdded(true);
+          setTimeout(() => setAdded(false), 1800);
+        }}
+      >
+        {soldOut ? (
+          "Sold out"
+        ) : added ? (
+          <>
+            <Check className="size-4" /> Added
+          </>
+        ) : (
+          "Add to cart"
+        )}
       </Button>
     </div>
   );

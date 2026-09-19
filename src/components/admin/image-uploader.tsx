@@ -36,7 +36,7 @@ async function upload(files: FileList): Promise<string[]> {
 }
 
 /** Multi-image gallery editor. The first image is the cover. */
-export function ImageUploader({ value, onChange, max = 10 }: { value: string[]; onChange: (v: string[]) => void; max?: number }) {
+export function ImageUploader({ value, onChange, max = 10, hint }: { value: string[]; onChange: (v: string[]) => void; max?: number; hint?: React.ReactNode }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,18 +101,18 @@ export function ImageUploader({ value, onChange, max = 10 }: { value: string[]; 
         }}
       />
       {error && <p className="mt-2 text-xs text-danger">{error}</p>}
-      <p className="mt-2 text-xs text-muted">JPG, PNG, WebP or AVIF up to 8 MB. A 4:5 portrait ratio looks best.</p>
+      <p className="mt-3 text-xs leading-relaxed text-muted">{hint ?? "JPG, PNG, WebP or AVIF, up to 8 MB."}</p>
     </div>
   );
 }
 
 /** Single image picker that also writes its value into a hidden input (for plain <form> actions). */
-export function SingleImageField({ name, defaultValue, className }: { name: string; defaultValue?: string | null; className?: string }) {
+export function SingleImageField({ name, defaultValue, className, hint }: { name: string; defaultValue?: string | null; className?: string; hint?: React.ReactNode }) {
   const [value, setValue] = useState(defaultValue ? [defaultValue] : []);
   return (
     <div className={cn("max-w-40", className)}>
       <input type="hidden" name={name} value={value[0] ?? ""} />
-      <ImageUploader value={value} onChange={setValue} max={1} />
+      <ImageUploader value={value} onChange={setValue} max={1} hint={hint} />
     </div>
   );
 }

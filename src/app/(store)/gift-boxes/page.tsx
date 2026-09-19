@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { PageHeader } from "@/components/store/product-listing";
+import { HoverView } from "@/components/store/product-card";
 import { Badge } from "@/components/ui/badge";
 import { getGiftBoxes, giftBoxValue } from "@/lib/catalog";
 import { formatMoney } from "@/lib/money";
@@ -31,7 +32,8 @@ export default async function GiftBoxesPage() {
               return (
                 <Link key={box.id} href={`/gift-boxes/${box.slug}`} className="group block">
                   <div className="relative aspect-4/5 overflow-hidden rounded-[3px] bg-surface-2">
-                    <Image src={box.coverImage} alt={box.name} fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-cover transition duration-700 group-hover:scale-[1.04]" />
+                    <Image src={box.coverImage} alt={box.name} fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-cover transition duration-700 ease-out group-hover:scale-[1.08] group-focus-visible:scale-[1.08]" />
+                    <HoverView />
                     <div className="absolute top-3 left-3 flex gap-2">
                       {stock <= 0 ? <Badge tone="dark">Sold out</Badge> : savingsPercent > 0 && <Badge tone="gold">Save {savingsPercent}%</Badge>}
                     </div>

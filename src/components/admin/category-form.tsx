@@ -20,7 +20,7 @@ export function CategoryForm({ category, onDone }: { category?: Category; onDone
       {category && <input type="hidden" name="id" value={category.id} />}
       <div>
         <p className="mb-1.5 text-xs font-medium tracking-[0.14em] text-muted uppercase">Image</p>
-        <SingleImageField name="image" defaultValue={category?.image} className="max-w-none" />
+        <SingleImageField name="image" defaultValue={category?.image} className="max-w-none" hint={<><span className="font-medium text-fg">Best size: 800 x 800 px</span> (square). Shown as a circle on the home page, so keep the piece in the middle.</>} />
       </div>
       <div className="grid content-start gap-4">
         {state?.error && <Alert tone="error">{state.error}</Alert>}
