@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BadgePercent, Gift, LayoutDashboard, Package, Settings, ShoppingCart, Tags, Ticket, Truck } from "lucide-react";
+import { BadgePercent, Gift, House, LayoutDashboard, Package, Settings, ShoppingCart, Tags, Ticket, Truck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/admin/home-page", label: "Home Page", icon: House },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/gift-boxes", label: "Gift Boxes", icon: Gift },
   { href: "/admin/categories", label: "Categories & Colors", icon: Tags },

@@ -75,7 +75,7 @@ export function ImageUploader({ value, onChange, max = 10, hint }: { value: stri
             className="flex aspect-4/5 flex-col items-center justify-center gap-2 rounded-[3px] border border-dashed border-border text-xs text-muted transition hover:border-gold hover:text-gold"
           >
             {busy ? <Loader2 className="size-5 animate-spin" /> : <ImagePlus className="size-5" strokeWidth={1.5} />}
-            {busy ? "Uploading…" : "Add images"}
+            {busy ? "Uploading…" : max === 1 ? "Add image" : "Add images"}
           </button>
         )}
       </div>

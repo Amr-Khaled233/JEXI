@@ -302,3 +302,32 @@ model RateLimit {
   count   Int
   resetAt DateTime
 }
+
+/// What the home page shows (single row, id = 1). Edited in Admin → Home Page.
+model HomePage {
+  id                 Int      @id @default(1)
+  /// null = the JEXI brand photo
+  heroImage          String?
+  heroTagline        String   @default("Timeless pieces, made to be worn every day.")
+  heroPrimaryLabel   String   @default("Shop the collection")
+  heroPrimaryHref    String   @default("/shop")
+  /// Empty label hides the second button.
+  heroSecondaryLabel String   @default("Gift boxes")
+  heroSecondaryHref  String   @default("/gift-boxes")
+  showCategories     Boolean  @default(true)
+  showBestSellers    Boolean  @default(true)
+  bestSellersEyebrow String   @default("Most loved")
+  bestSellersTitle   String   @default("Best Sellers")
+  /// Chosen products in display order; empty = products tagged Best Seller.
+  bestSellerIds      String[]
+  showGiftBox        Boolean  @default(true)
+  /// null = the best-selling published gift box
+  featuredGiftBoxId  String?
+  showNewArrivals    Boolean  @default(true)
+  newArrivalsEyebrow String   @default("Just in")
+  newArrivalsTitle   String   @default("New Arrivals")
+  /// Chosen products in display order; empty = products tagged New.
+  newArrivalIds      String[]
+  showPromises       Boolean  @default(true)
+  updatedAt          DateTime @updatedAt
+}

@@ -121,6 +121,14 @@ Free shipping is managed in its own **Free Shipping** tab:
 
 When an order doesn't get free shipping, it pays the fee you set for its governorate in **Shipping Zones**. A governorate with no fee ships free. Governorates switched off in Shipping Zones don't appear at checkout.
 
+### Home page
+Everything on the home page is controlled from **Home Page** in the dashboard:
+
+- **Hero:** photo (1600 x 1600 px square; empty = the JEXI logo photo), tagline, and two buttons with their links. An empty button text hides that button.
+- **Sections:** switch Categories, Best Sellers, Featured gift box, New Arrivals and Store promises on or off.
+- **Products:** Best Sellers and New Arrivals show the products tagged Best Seller / New automatically, or up to 8 products you pick, in the order you set.
+- **Featured gift box:** choose which gift box the banner shows (default: the best-selling one).
+
 ### Products, colors and categories
 - A product has a **Price** and an optional **Sale price**. When a sale price is set, customers pay it, the regular price is shown struck through, and the Sale badge is added automatically.
 - Colors are managed in **Categories & Colors** (name plus a color picker), and can also be added while editing a product. A color can only be deleted once no product uses it.
