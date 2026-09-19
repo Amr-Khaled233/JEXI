@@ -38,6 +38,10 @@ const homeSchema = z.object({
   newArrivalsTitle: text(60),
   newArrivalIds: z.array(z.string().min(1).max(64)).max(8, "Pick up to 8 new arrivals."),
   showPromises: z.boolean(),
+  promiseShipping: z.boolean(),
+  promiseCod: z.boolean(),
+  promiseGift: z.boolean(),
+  promiseSupport: z.boolean(),
 });
 
 export type HomePayload = z.input<typeof homeSchema>;

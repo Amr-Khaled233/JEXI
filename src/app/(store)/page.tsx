@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Gift, RotateCcw, ShieldCheck, Truck } from "lucide-react";
+import { STORE_PROMISES } from "@/components/store-promises";
 import { ProductCard } from "@/components/store/product-card";
 import { SectionHeading } from "@/components/store/section-heading";
 import { buttonClasses } from "@/components/ui/button";
@@ -99,26 +99,33 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Promises */}
-      {home.showPromises && (
-        <section className="container-page mt-12 grid grid-cols-2 gap-8 border-y border-border py-12 md:grid-cols-4">
-          {[
-            offer.active
-              ? { icon: Truck, title: "Free shipping", text: offer.minimum ? `On orders over ${formatMoney(offer.minimum)}` : "Delivered across Egypt" }
-              : { icon: Truck, title: "Fast delivery", text: "Across Egypt" },
-            { icon: ShieldCheck, title: "Cash on delivery", text: "Pay when it arrives" },
-            { icon: Gift, title: "Gift ready", text: "Signature JEXI packaging" },
-            { icon: RotateCcw, title: "Easy support", text: "We're a message away" },
-          ].map(({ icon: Icon, title, text }) => (
-            <div key={title} className="flex flex-col items-center text-center">
-              <Icon className="size-6 text-gold" strokeWidth={1.2} />
-              <p className="mt-3 text-[0.7rem] tracking-[0.22em] uppercase">{title}</p>
-              <p className="mt-1 text-sm text-muted">{text}</p>
-            </div>
-          ))}
-        </section>
-      )}
+      {/* Promises: each item can be switched off in Admin → Home Page */}
+      <Promises
+        items={home.showPromises ? STORE_PROMISES.filter(({ key }) => home[key]) : []}
+        shippingText={offer.active ? (offer.minimum ? `On orders over ${formatMoney(offer.minimum)}` : "Delivered across Egypt") : null}
+      />
     </>
+  );
+}
+
+const PROMISE_COLS: Record<number, string> = { 1: "md:grid-cols-1", 2: "md:grid-cols-2", 3: "md:grid-cols-3", 4: "md:grid-cols-4" };
+
+function Promises({ items, shippingText }: { items: typeof STORE_PROMISES; shippingText: string | null }) {
+  if (items.length === 0) return null;
+  return (
+    <section className={`container-page mt-12 grid gap-8 border-y border-border py-12 ${items.length === 1 ? "grid-cols-1" : "grid-cols-2"} ${PROMISE_COLS[items.length]}`}>
+      {items.map(({ key, icon: Icon, title, text }) => {
+        // The shipping item reflects the current free-shipping offer.
+        const shipping = key === "promiseShipping";
+        return (
+          <div key={key} className="flex flex-col items-center text-center">
+            <Icon className="size-6 text-gold" strokeWidth={1.2} />
+            <p className="mt-3 text-[0.7rem] tracking-[0.22em] uppercase">{shipping && !shippingText ? "Fast delivery" : title}</p>
+            <p className="mt-1 text-sm text-muted">{shipping ? (shippingText ?? "Across Egypt") : text}</p>
+          </div>
+        );
+      })}
+    </section>
   );
 }
 

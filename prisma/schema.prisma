@@ -329,5 +329,10 @@ model HomePage {
   /// Chosen products in display order; empty = products tagged New.
   newArrivalIds      String[]
   showPromises       Boolean  @default(true)
+  /// Individual items in the store promises strip.
+  promiseShipping    Boolean  @default(true)
+  promiseCod         Boolean  @default(true)
+  promiseGift        Boolean  @default(true)
+  promiseSupport     Boolean  @default(true)
   updatedAt          DateTime @updatedAt
 }

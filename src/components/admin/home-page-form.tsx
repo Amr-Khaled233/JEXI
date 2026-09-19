@@ -8,6 +8,7 @@ import { ImageUploader } from "@/components/admin/image-uploader";
 import { Panel } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { Alert, Field, Input, Select } from "@/components/ui/field";
+import { STORE_PROMISES } from "@/components/store-promises";
 import { cn } from "@/lib/utils";
 
 type ProductOption = { id: string; name: string; image: string | null; published: boolean };
@@ -234,7 +235,25 @@ export function HomePageForm({
           <ProductPicker ids={v.newArrivalIds} onChange={(ids) => set("newArrivalIds", ids)} products={products} autoLabel="Products tagged New" />
         </Section>
 
-        <Section title="Store promises" description="The strip with Free shipping, Cash on delivery, Gift ready and Easy support." shown={v.showPromises} onShown={(x) => set("showPromises", x)} />
+        <Section title="Store promises" description="The strip near the bottom of the page. Choose which items it shows." shown={v.showPromises} onShown={(x) => set("showPromises", x)}>
+          <ul className="divide-y divide-border">
+            {STORE_PROMISES.map(({ key, icon: Icon, title, text }) => (
+              <li key={key} className={cn("flex items-center gap-4 py-3 transition", !v[key] && "opacity-50")}>
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border text-gold">
+                  <Icon className="size-4.5" strokeWidth={1.5} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium">{title}</span>
+                  <span className="block text-xs text-muted">
+                    {key === "promiseShipping" ? "Shows your free-shipping offer when one is running, otherwise Fast delivery." : text}
+                  </span>
+                </span>
+                <Switch checked={!!v[key]} onChange={(x) => set(key, x)} label={`Show ${title}`} />
+              </li>
+            ))}
+          </ul>
+          {STORE_PROMISES.every(({ key }) => !v[key]) && <p className="mt-3 text-xs text-warning">All items are off, so the strip won&apos;t show.</p>}
+        </Section>
       </div>
 
       <aside className="min-w-0">

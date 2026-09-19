@@ -125,7 +125,7 @@ When an order doesn't get free shipping, it pays the fee you set for its governo
 Everything on the home page is controlled from **Home Page** in the dashboard:
 
 - **Hero:** photo (1600 x 1600 px square; empty = the JEXI logo photo), tagline, and two buttons with their links. An empty button text hides that button.
-- **Sections:** switch Categories, Best Sellers, Featured gift box, New Arrivals and Store promises on or off.
+- **Sections:** switch Categories, Best Sellers, Featured gift box, New Arrivals and Store promises on or off. Each of the four store promises (Free shipping, Cash on delivery, Gift ready, Easy support) has its own switch too.
 - **Products:** Best Sellers and New Arrivals show the products tagged Best Seller / New automatically, or up to 8 products you pick, in the order you set.
 - **Featured gift box:** choose which gift box the banner shows (default: the best-selling one).
 

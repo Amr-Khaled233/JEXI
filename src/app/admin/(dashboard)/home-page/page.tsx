@@ -50,6 +50,10 @@ export default async function HomePageSettingsPage() {
           newArrivalsTitle: home.newArrivalsTitle,
           newArrivalIds: home.newArrivalIds,
           showPromises: home.showPromises,
+          promiseShipping: home.promiseShipping,
+          promiseCod: home.promiseCod,
+          promiseGift: home.promiseGift,
+          promiseSupport: home.promiseSupport,
         }}
       />
     </>
