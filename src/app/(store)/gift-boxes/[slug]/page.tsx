@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ColorSwatch } from "@/components/color-swatch";
 import { AddGiftBoxToCart } from "@/components/store/add-to-cart";
+import { BackButton } from "@/components/store/back-button";
 import { getGiftBoxBySlug, giftBoxValue } from "@/lib/catalog";
 import { formatMoney } from "@/lib/money";
 
@@ -22,6 +23,7 @@ export default async function GiftBoxPage({ params }: Props) {
 
   return (
     <div className="container-page py-8 md:py-12">
+      <BackButton fallbackHref="/gift-boxes" />
       <nav aria-label="Breadcrumb" className="mb-6 text-xs tracking-[0.14em] text-muted uppercase">
         <Link href="/" className="hover:text-gold">
           Home

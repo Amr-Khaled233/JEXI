@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Gift, ShieldCheck, Truck } from "lucide-react";
 import { Price } from "@/components/price";
 import { AddToCart } from "@/components/store/add-to-cart";
+import { BackButton } from "@/components/store/back-button";
 import { ProductGrid } from "@/components/store/product-card";
 import { ProductGallery } from "@/components/store/product-gallery";
 import { SectionHeading } from "@/components/store/section-heading";
@@ -39,6 +40,7 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <div className="container-page py-8 md:py-12">
+      <BackButton fallbackHref={primaryCategory ? `/category/${primaryCategory.slug}` : "/shop"} />
       <nav aria-label="Breadcrumb" className="mb-6 text-xs tracking-[0.14em] text-muted uppercase">
         <Link href="/" className="hover:text-gold">
           Home

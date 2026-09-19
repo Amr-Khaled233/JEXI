@@ -1,4 +1,5 @@
 import { AddedToast } from "@/components/store/added-toast";
+import { NavTracker } from "@/components/store/back-button";
 import { CartDrawer } from "@/components/store/cart-drawer";
 import { Footer } from "@/components/store/footer";
 import { Header } from "@/components/store/header";
@@ -14,6 +15,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
       <Footer categories={categories} settings={settings} />
       <CartDrawer />
       <AddedToast />
+      <NavTracker />
     </div>
   );
 }
