@@ -7,7 +7,7 @@ import { useState, useTransition } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { placeOrderAction } from "@/app/actions/checkout";
 import { OrderTotals, PromoCodeInput } from "@/components/store/cart-parts";
-import { PaymentInstructions } from "@/components/store/payment-instructions";
+import { ConfirmationNotice, PaymentInstructions } from "@/components/store/payment-instructions";
 import { useCartQuote } from "@/components/store/use-cart-quote";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Alert, Field, Input, Select, Textarea } from "@/components/ui/field";
@@ -98,6 +98,15 @@ export function CheckoutForm({
     <form onSubmit={submit} className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_26rem]" noValidate>
       <div className="space-y-10">
         {formError && <Alert tone="error">{formError}</Alert>}
+
+        {quote && !(quote.shipping.pending && quote.shipping.free) && (
+          <ConfirmationNotice
+            shippingFee={shippingFee}
+            cashOnDelivery={quote.total - shippingFee}
+            paymentPhone={paymentPhone}
+            pending={quote.shipping.pending}
+          />
+        )}
 
         <Section step={1} title="Contact">
           <div className="grid gap-4 sm:grid-cols-2">
