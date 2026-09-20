@@ -15,17 +15,16 @@ async function loadOrder(orderId: string): Promise<EmailOrder | null> {
   });
 }
 
-/** Admin alert + customer confirmation. Called via after() so checkout isn't slowed down. */
+/**
+ * New order: only the store is emailed. The customer is emailed once the admin
+ * confirms the order (after the shipping fee arrives).
+ */
 export async function notifyNewOrder(orderId: string) {
   const order = await loadOrder(orderId);
   if (!order) return;
   const [adminTo, settings] = await Promise.all([getNotificationEmail(), getSettings()]);
-  const brand = brandFromSettings(settings);
-
-  await Promise.all([
-    adminTo ? sendMail({ to: adminTo, replyTo: order.email, ...adminNewOrderEmail(order, brand) }) : null,
-    sendMail({ to: order.email, replyTo: settings.contactEmail ?? undefined, ...customerConfirmationEmail(order, brand) }),
-  ]);
+  if (!adminTo) return;
+  await sendMail({ to: adminTo, replyTo: order.email, ...adminNewOrderEmail(order, brandFromSettings(settings)) });
 }
 
 export async function notifyStatusChange(orderId: string, status: OrderStatusKey, note?: string | null) {
@@ -35,9 +34,8 @@ export async function notifyStatusChange(orderId: string, status: OrderStatusKey
     getSettings(),
     db.shippingZone.findUnique({ where: { name: order.governorate }, select: { estimatedDelivery: true } }),
   ]);
-  await sendMail({
-    to: order.email,
-    replyTo: settings.contactEmail ?? undefined,
-    ...customerStatusEmail(order, status, brandFromSettings(settings), { note, estimatedDelivery: zone?.estimatedDelivery }),
-  });
+  const brand = brandFromSettings(settings);
+  // Confirming is the customer's first email, so it carries the full order details.
+  const message = status === "CONFIRMED" ? customerConfirmationEmail(order, brand) : customerStatusEmail(order, status, brand, { note, estimatedDelivery: zone?.estimatedDelivery });
+  await sendMail({ to: order.email, replyTo: settings.contactEmail ?? undefined, ...message });
 }

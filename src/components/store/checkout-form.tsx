@@ -7,6 +7,7 @@ import { useState, useTransition } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { placeOrderAction } from "@/app/actions/checkout";
 import { OrderTotals, PromoCodeInput } from "@/components/store/cart-parts";
+import { PaymentInstructions } from "@/components/store/payment-instructions";
 import { useCartQuote } from "@/components/store/use-cart-quote";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Alert, Field, Input, Select, Textarea } from "@/components/ui/field";
@@ -16,7 +17,17 @@ import { cn } from "@/lib/utils";
 
 type Zone = { name: string; estimatedDelivery: string | null };
 
-export function CheckoutForm({ zones, paymentMethods }: { zones: Zone[]; paymentMethods: { method: "COD"; label: string; description: string }[] }) {
+export function CheckoutForm({
+  zones,
+  paymentMethods,
+  paymentPhone,
+  whatsapp,
+}: {
+  zones: Zone[];
+  paymentMethods: { method: "COD"; label: string; description: string }[];
+  paymentPhone: string | null;
+  whatsapp: string | null;
+}) {
   const router = useRouter();
   const clear = useCart((s) => s.clear);
   const [form, setForm] = useState({
@@ -49,6 +60,9 @@ export function CheckoutForm({ zones, paymentMethods }: { zones: Zone[]; payment
   };
 
   const zone = zones.find((z) => z.name === form.governorate);
+  // A shipping fee is collected up front (by wallet transfer) so the order can be confirmed.
+  const shippingFee = quote?.shipping.fee ?? 0;
+  const showInstructions = shippingFee > 0 && !!paymentPhone;
 
   if (hydrated && items.length === 0 && !placed) {
     return (
@@ -146,6 +160,11 @@ export function CheckoutForm({ zones, paymentMethods }: { zones: Zone[]; payment
         </Section>
 
         <Section step={3} title="Payment">
+          <p className="-mt-2 mb-4 text-sm leading-relaxed text-muted">
+            {showInstructions
+              ? "Two steps: send the shipping fee now so we can confirm your order, then pay for your pieces in cash when they arrive."
+              : "Pay for your order in cash when it arrives."}
+          </p>
           <div className="space-y-3">
             {paymentMethods.map((m) => (
               <label
@@ -163,6 +182,7 @@ export function CheckoutForm({ zones, paymentMethods }: { zones: Zone[]; payment
               </label>
             ))}
           </div>
+          <PaymentInstructions className="mt-4" shippingFee={shippingFee} paymentPhone={paymentPhone} whatsapp={whatsapp} />
         </Section>
       </div>
 
@@ -208,7 +228,15 @@ export function CheckoutForm({ zones, paymentMethods }: { zones: Zone[]; payment
         <Button type="submit" size="lg" className="w-full" loading={pending} disabled={blocked || pending}>
           <Lock className="size-3.5" /> Place order
         </Button>
-        <p className="text-center text-xs text-muted">You&apos;ll pay {quote ? formatMoney(quote.total) : ""} in cash on delivery.</p>
+        <p className="text-center text-xs leading-relaxed text-muted">
+          {showInstructions ? (
+            <>
+              You&apos;ll send {formatMoney(shippingFee)} shipping to confirm, then pay {formatMoney((quote?.total ?? 0) - shippingFee)} in cash on delivery.
+            </>
+          ) : (
+            <>You&apos;ll pay {quote ? formatMoney(quote.total) : ""} in cash on delivery.</>
+          )}
+        </p>
       </aside>
     </form>
   );

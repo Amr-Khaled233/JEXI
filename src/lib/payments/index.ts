@@ -20,7 +20,7 @@ export interface PaymentProvider {
 const cashOnDelivery: PaymentProvider = {
   method: "COD",
   label: "Cash on Delivery",
-  description: "Pay in cash when your order arrives.",
+  description: "Pay for your pieces in cash when your order arrives.",
   enabled: () => true,
   initiate: async () => ({ redirectUrl: null }),
 };

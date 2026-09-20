@@ -5,10 +5,12 @@ import { timingSafeEqual } from "node:crypto";
 import { CheckCircle2 } from "lucide-react";
 import { OrderAddress, OrderItems, OrderSummaryTotals } from "@/components/order-details";
 import { OrderTimeline } from "@/components/order-timeline";
+import { PaymentInstructions } from "@/components/store/payment-instructions";
 import { buttonClasses } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ORDER_STATUSES } from "@/lib/constants";
 import { db } from "@/lib/db";
+import { getSettings } from "@/lib/settings";
 import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Your order", robots: { index: false } };
@@ -36,6 +38,10 @@ export default async function OrderPage({ params, searchParams }: Props) {
   // Only visible with the order's secret link (shown after checkout and sent by email).
   if (!tokenMatches(t, order.accessToken)) notFound();
 
+  // While the order is pending, remind the customer to send the shipping fee.
+  const settings = await getSettings();
+  const awaitingFee = order.status === "PENDING" && order.shippingFee > 0 && !!settings.paymentPhone;
+
   return (
     <div className="container-page max-w-5xl py-10 md:py-14">
       {isNew && (
@@ -44,9 +50,27 @@ export default async function OrderPage({ params, searchParams }: Props) {
           <p className="eyebrow mt-5">Thank you, {order.customerName.split(" ")[0]}</p>
           <h1 className="mt-3 text-4xl md:text-5xl">Your order is placed</h1>
           <p className="mx-auto mt-4 max-w-lg text-muted">
-            We&apos;ve emailed a confirmation to <span className="text-fg">{order.email}</span>. We&apos;ll call you to confirm delivery, and you&apos;ll get an email each time your order&apos;s status changes.
+            {awaitingFee ? (
+              <>
+                Send the shipping fee to confirm it. Once we receive it, we&apos;ll confirm your order and email <span className="text-fg">{order.email}</span> with the details.
+              </>
+            ) : (
+              <>
+                We&apos;ll confirm your order shortly and email <span className="text-fg">{order.email}</span>. You&apos;ll also get an email each time its status changes.
+              </>
+            )}
           </p>
         </div>
+      )}
+
+      {awaitingFee && (
+        <PaymentInstructions
+          className="mb-8"
+          shippingFee={order.shippingFee}
+          paymentPhone={settings.paymentPhone}
+          whatsapp={settings.whatsapp}
+          orderNumber={order.orderNumber}
+        />
       )}
 
       <div className="card overflow-hidden">

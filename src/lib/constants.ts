@@ -1,7 +1,7 @@
 // Shared, client-safe constants. String unions mirror the Prisma enums.
 
 export type TagKey = "BEST_SELLER" | "NEW" | "SALE";
-export type OrderStatusKey = "PENDING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+export type OrderStatusKey = "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 
 /** A product color, managed from the dashboard. */
 export type ColorInfo = { id: string; name: string; slug: string; hex: string };
@@ -29,14 +29,15 @@ export const TAGS: Record<TagKey, { label: string }> = {
 export const TAG_KEYS = Object.keys(TAGS) as TagKey[];
 
 export const ORDER_STATUSES: Record<OrderStatusKey, { label: string; description: string }> = {
-  PENDING: { label: "Pending", description: "We've received your order and are preparing it." },
+  PENDING: { label: "Pending", description: "We've received your order and are waiting for the shipping fee to confirm it." },
+  CONFIRMED: { label: "Confirmed", description: "Your order is confirmed and we're preparing it." },
   SHIPPED: { label: "Shipped", description: "Your order is on its way to you." },
   DELIVERED: { label: "Delivered", description: "Your order has been delivered." },
   CANCELLED: { label: "Cancelled", description: "This order was cancelled." },
 };
 export const ORDER_STATUS_KEYS = Object.keys(ORDER_STATUSES) as OrderStatusKey[];
 /** The happy-path progression shown on the tracking line. */
-export const ORDER_FLOW: OrderStatusKey[] = ["PENDING", "SHIPPED", "DELIVERED"];
+export const ORDER_FLOW: OrderStatusKey[] = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"];
 
 /** All 27 Egyptian governorates with a sensible default delivery estimate. */
 export const GOVERNORATES: { name: string; eta: string }[] = [

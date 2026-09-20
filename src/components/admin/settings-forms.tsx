@@ -13,6 +13,7 @@ type SettingsValues = {
   contactEmail: string | null;
   contactPhone: string | null;
   whatsapp: string | null;
+  paymentPhone: string | null;
   instagram: string | null;
   facebook: string | null;
   tiktok: string | null;
@@ -70,6 +71,13 @@ export function SettingsForm({ initial, isOwner }: { initial: SettingsValues; is
           ))}
           <Field label="WhatsApp number" htmlFor="whatsapp" hint="Shown as a WhatsApp button in the footer and in customer emails. Leave blank to hide.">
             <Input id="whatsapp" name="whatsapp" defaultValue={initial.whatsapp ?? ""} placeholder="01XXXXXXXXX" />
+          </Field>
+          <Field
+            label="Shipping fee number"
+            htmlFor="paymentPhone"
+            hint="The wallet or phone number customers send the shipping fee to before you confirm their order. Shown at checkout and on the order page."
+          >
+            <Input id="paymentPhone" name="paymentPhone" defaultValue={initial.paymentPhone ?? ""} placeholder="01XXXXXXXXX" />
           </Field>
         </div>
       </Panel>

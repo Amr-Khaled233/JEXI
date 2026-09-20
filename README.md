@@ -98,10 +98,13 @@ The browser only stores which items are in the cart and their quantities (in loc
 If any step fails, nothing is saved. Emails are sent after the response, using `after()`, so checkout stays fast.
 
 ### Order statuses
-`Pending → Shipped → Delivered`, or `Cancelled`. The customer sees these as a progress line on their order page and on Track Order.
+`Pending → Confirmed → Shipped → Delivered`, or `Cancelled`. The customer sees these as a progress line on their order page and on Track Order.
+
+**How an order is confirmed:** the customer pays for the pieces in cash on delivery, but sends the **shipping fee** up front. At checkout, and again on their order page, they're told to send the fee to the number in **Settings → Shipping fee number** and to send the screenshot on WhatsApp. When the money arrives, you set the order to **Confirmed** in the dashboard.
 
 - Every change is saved to the order's timeline, which both the admin and the customer can see.
-- When the admin changes a status, the customer is emailed unless "Email the customer" is unticked.
+- **A new order emails only the store.** The customer's first email is sent when you mark the order **Confirmed**, and it carries the full order details.
+- After that, the customer is emailed on every status change unless "Email the customer" is unticked.
 - **Cancelling** puts the items back in stock and gives back the promo-code use. A cancelled order can't be changed again.
 - Marking a Cash on Delivery order **Delivered** also marks it as paid.
 - **Deleting** an order removes it permanently. If it was still Pending or Shipped, its items go back into stock first.

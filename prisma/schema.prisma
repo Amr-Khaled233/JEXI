@@ -22,6 +22,7 @@ enum ProductTag {
 
 enum OrderStatus {
   PENDING
+  CONFIRMED
   SHIPPED
   DELIVERED
   CANCELLED
@@ -277,6 +278,8 @@ model StoreSettings {
   contactEmail          String?
   contactPhone          String?
   whatsapp              String?
+  /// Wallet or phone number the customer sends the shipping fee to.
+  paymentPhone          String?
   instagram             String?
   facebook              String?
   tiktok                String?

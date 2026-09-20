@@ -24,7 +24,8 @@ export function PageTitle({ title, description, action }: { title: string; descr
 
 export const ORDER_STATUS_TONES: Record<OrderStatusKey, BadgeTone> = {
   PENDING: "warning",
-  SHIPPED: "gold",
+  CONFIRMED: "gold",
+  SHIPPED: "dark",
   DELIVERED: "success",
   CANCELLED: "danger",
 };

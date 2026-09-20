@@ -186,7 +186,7 @@ function tracker(status: OrderStatusKey) {
   </table>
 </td></tr>`;
   }
-  const labels: Record<string, string> = { PENDING: "Order placed", SHIPPED: "On its way", DELIVERED: "Delivered" };
+  const labels: Record<string, string> = { PENDING: "Order placed", CONFIRMED: "Confirmed", SHIPPED: "On its way", DELIVERED: "Delivered" };
   const current = ORDER_FLOW.indexOf(status);
   const cells = ORDER_FLOW.map((s, i) => {
     const done = i <= current;
@@ -195,7 +195,7 @@ function tracker(status: OrderStatusKey) {
     const dot = done
       ? `<div style="width:24px;height:24px;border-radius:24px;background:${C.gold};color:#ffffff;font-family:${SANS};font-size:12px;line-height:24px;text-align:center;font-weight:bold;">&#10003;</div>`
       : `<div style="width:20px;height:20px;border-radius:20px;border:2px solid ${C.line};background:#ffffff;font-size:0;line-height:0;">&nbsp;</div>`;
-    return `<td width="33%" align="center" valign="top" style="padding:0;">
+    return `<td width="25%" align="center" valign="top" style="padding:0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
         <td valign="middle" style="padding:0;"><div style="height:2px;background:${lineLeft};font-size:0;line-height:0;">&nbsp;</div></td>
         <td width="24" align="center" style="padding:0;">${dot}</td>
@@ -382,14 +382,14 @@ export function adminNewOrderEmail(order: EmailOrder, brand: EmailBrand) {
 
 export function customerConfirmationEmail(order: EmailOrder, brand: EmailBrand) {
   const name = firstName(order.customerName);
-  const subject = `We received your JEXI order ${order.orderNumber}`;
+  const subject = `Your JEXI order ${order.orderNumber} is confirmed`;
   const body =
     intro(
-      "Order received",
-      `Thank you, ${name}`,
-      "We have received your order and will call you shortly to confirm the delivery. You will get an email from us each time your order moves forward.",
+      "Order confirmed",
+      `Your order is confirmed, ${name}`,
+      "Thank you. Your order is confirmed and we are preparing your pieces. You will get an email from us each time it moves forward.",
     ) +
-    tracker("PENDING") +
+    tracker("CONFIRMED") +
     metaStrip([
       { label: "Order number", value: order.orderNumber },
       { label: "Date", value: formatDate(order.createdAt) },
@@ -400,7 +400,11 @@ export function customerConfirmationEmail(order: EmailOrder, brand: EmailBrand) 
       { title: "Delivery address", html: addressHtml(order) },
       {
         title: "Payment",
-        html: `<strong style="color:${C.ink};">${paymentLabel(order)}</strong><br>Please have ${formatMoney(order.total)} ready when your order arrives.`,
+        html: `<strong style="color:${C.ink};">${paymentLabel(order)}</strong><br>${
+          order.shippingFee > 0
+            ? `Shipping of ${formatMoney(order.shippingFee)} received. Please have ${formatMoney(order.total - order.shippingFee)} ready when your order arrives.`
+            : `Please have ${formatMoney(order.total)} ready when your order arrives.`
+        }`,
       },
     ) +
     button(orderLink(order), "View your order") +
@@ -408,8 +412,8 @@ export function customerConfirmationEmail(order: EmailOrder, brand: EmailBrand) 
 
   return {
     subject,
-    html: layout({ title: subject, preheader: `Thank you ${name}. Your order ${order.orderNumber} for ${formatMoney(order.total)} is in.`, body, brand, footerNote: `You are receiving this email because you placed an order with ${brand.storeName}.` }),
-    text: `Thank you, ${name}.\n\nWe have received your order ${order.orderNumber} and will call you shortly to confirm the delivery.\n\n${textItems(order)}\n\nDelivery address: ${order.address}, ${order.area}, ${order.governorate}\nPayment: Cash on delivery\n\nView your order: ${orderLink(order)}${textFooter(brand)}`,
+    html: layout({ title: subject, preheader: `Order ${order.orderNumber} is confirmed and we are preparing it.`, body, brand, footerNote: `You are receiving this email because you placed an order with ${brand.storeName}.` }),
+    text: `Your order is confirmed, ${name}.\n\nOrder ${order.orderNumber} is confirmed and we are preparing your pieces.\n\n${textItems(order)}\n\nDelivery address: ${order.address}, ${order.area}, ${order.governorate}\nPayment: Cash on delivery\n\nView your order: ${orderLink(order)}${textFooter(brand)}`,
   };
 }
 
@@ -418,7 +422,13 @@ const STATUS_COPY: Record<OrderStatusKey, { eyebrow: string; subject: string; he
     eyebrow: "Order received",
     subject: "We received your JEXI order",
     heading: (n) => `Thank you, ${n}`,
-    text: "We have received your order and are preparing it. We will call you shortly to confirm the delivery.",
+    text: "We have received your order. Send the shipping fee and the screenshot so we can confirm it.",
+  },
+  CONFIRMED: {
+    eyebrow: "Order confirmed",
+    subject: "Your JEXI order is confirmed",
+    heading: () => "Your order is confirmed",
+    text: "We have received your shipping fee. Your order is confirmed and we are preparing your pieces.",
   },
   SHIPPED: {
     eyebrow: "On its way",

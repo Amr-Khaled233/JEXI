@@ -135,6 +135,7 @@ const settingsSchema = z.object({
   contactEmail: optionalText(200).refine((v) => !v || z.email().safeParse(v).success, "Invalid contact email."),
   contactPhone: optionalText(30),
   whatsapp: optionalText(30),
+  paymentPhone: optionalText(30),
   instagram: socialHandle,
   facebook: socialHandle,
   tiktok: socialHandle,
