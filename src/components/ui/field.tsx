@@ -63,7 +63,7 @@ export function Checkbox({ label, className, ...props }: React.InputHTMLAttribut
   );
 }
 
-export function Alert({ tone = "info", children, className }: { tone?: "info" | "error" | "success"; children: React.ReactNode; className?: string }) {
+export function Alert({ tone = "info", children, className }: { tone?: "info" | "error" | "success" | "warning"; children: React.ReactNode; className?: string }) {
   return (
     <div
       role={tone === "error" ? "alert" : "status"}
@@ -71,6 +71,7 @@ export function Alert({ tone = "info", children, className }: { tone?: "info" | 
         "rounded-[3px] border px-4 py-3 text-sm",
         tone === "error" && "border-danger/40 bg-danger/10 text-danger",
         tone === "success" && "border-success/40 bg-success/10 text-success",
+        tone === "warning" && "border-warning/40 bg-warning/10 text-warning",
         tone === "info" && "border-gold/30 bg-gold/10 text-fg",
         className,
       )}

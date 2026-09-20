@@ -7,7 +7,9 @@ import { OrderStatusForm } from "@/components/admin/order-status-form";
 import { OrderStatusBadge, Panel } from "@/components/admin/ui";
 import { OrderAddress, OrderItems, OrderSummaryTotals } from "@/components/order-details";
 import { OrderTimeline } from "@/components/order-timeline";
+import { Alert } from "@/components/ui/field";
 import { db } from "@/lib/db";
+import { formatMoney } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 
 type Props = { params: Promise<{ id: string }> };
@@ -42,6 +44,14 @@ export default async function AdminOrderPage({ params }: Props) {
           <DeleteOrderButton orderId={order.id} orderNumber={order.orderNumber} open={order.status === "PENDING" || order.status === "SHIPPED"} redirectToList />
         </div>
       </div>
+
+      {order.status === "PENDING" && (
+        <Alert tone="warning" className="mb-6">
+          {order.shippingFee > 0
+            ? `Waiting for ${formatMoney(order.shippingFee)} shipping from the customer. Confirm the order once the transfer arrives, and they get their confirmation email.`
+            : "Shipping is free on this order, so confirm it whenever you're ready. The customer gets their confirmation email then."}
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="space-y-6">
