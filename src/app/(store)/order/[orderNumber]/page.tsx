@@ -52,11 +52,11 @@ export default async function OrderPage({ params, searchParams }: Props) {
           <p className="mx-auto mt-4 max-w-lg text-muted">
             {awaitingFee ? (
               <>
-                Send the shipping fee to confirm it. Once we receive it, we&apos;ll confirm your order and email <span className="text-fg">{order.email}</span> with the details.
+                We&apos;ve emailed <span className="text-fg">{order.email}</span> with the shipping fee and where to send it. Once it reaches us we&apos;ll confirm your order.
               </>
             ) : (
               <>
-                We&apos;ll confirm your order shortly and email <span className="text-fg">{order.email}</span>. You&apos;ll also get an email each time its status changes.
+                We&apos;ve emailed <span className="text-fg">{order.email}</span> with the details. You&apos;ll get an email each time your order moves forward.
               </>
             )}
           </p>

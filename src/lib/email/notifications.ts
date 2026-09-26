@@ -1,7 +1,7 @@
 import type { OrderStatusKey } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { sendMail } from "@/lib/email/mailer";
-import { adminNewOrderEmail, customerConfirmationEmail, customerStatusEmail, type EmailBrand, type EmailOrder } from "@/lib/email/templates";
+import { adminNewOrderEmail, customerConfirmationEmail, customerOrderPlacedEmail, customerStatusEmail, type EmailBrand, type EmailOrder } from "@/lib/email/templates";
 import { getNotificationEmail, getSettings, type Settings } from "@/lib/settings";
 
 export function brandFromSettings(settings: Settings): EmailBrand {
@@ -16,15 +16,19 @@ async function loadOrder(orderId: string): Promise<EmailOrder | null> {
 }
 
 /**
- * New order: only the store is emailed. The customer is emailed once the admin
- * confirms the order (after the shipping fee arrives).
+ * New order: the store gets the details, and the customer gets the shipping fee
+ * and the number to send it to, since the order waits on that.
  */
 export async function notifyNewOrder(orderId: string) {
   const order = await loadOrder(orderId);
   if (!order) return;
   const [adminTo, settings] = await Promise.all([getNotificationEmail(), getSettings()]);
-  if (!adminTo) return;
-  await sendMail({ to: adminTo, replyTo: order.email, ...adminNewOrderEmail(order, brandFromSettings(settings)) });
+  const brand = brandFromSettings(settings);
+
+  await Promise.allSettled([
+    adminTo ? sendMail({ to: adminTo, replyTo: order.email, ...adminNewOrderEmail(order, brand) }) : Promise.resolve(),
+    sendMail({ to: order.email, replyTo: settings.contactEmail ?? undefined, ...customerOrderPlacedEmail(order, brand, { paymentPhone: settings.paymentPhone }) }),
+  ]);
 }
 
 export async function notifyStatusChange(orderId: string, status: OrderStatusKey, note?: string | null) {

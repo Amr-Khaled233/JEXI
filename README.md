@@ -4,7 +4,7 @@ E-commerce storefront and admin dashboard for **JEXI Accessories**, a jewelry br
 
 - **Storefront:** home, category pages with filters and sorting, product pages, Gift Boxes, cart with promo codes, checkout (Cash on Delivery), order confirmation, and order tracking by email (no customer accounts or passwords).
 - **Admin (`/admin`):** overview stats, orders (the customer is emailed whenever a status changes), products, gift boxes, categories, promo codes, shipping zones for all 27 governorates, and settings.
-- **Email:** Gmail SMTP through Nodemailer. The store gets an email for each new order; the customer gets a confirmation and a status-update email.
+- **Email:** Gmail SMTP through Nodemailer. Each new order emails the store and emails the customer the shipping fee to send; after that the customer is emailed on every status change.
 - **Themes:** dark (black and gold) and light (ivory and bronze). The visitor's choice is remembered.
 
 ---
@@ -100,10 +100,11 @@ If any step fails, nothing is saved. Emails are sent after the response, using `
 ### Order statuses
 `Pending → Confirmed → Shipped → Delivered`, or `Cancelled`. The customer sees these as a progress line on their order page and on Track Order.
 
-**How an order is confirmed:** the customer pays for the pieces in cash on delivery, but sends the **shipping fee** up front. At checkout, and again on their order page, they're told to send the fee to the number in **Settings → Shipping fee number** and to send the screenshot on WhatsApp. When the money arrives, you set the order to **Confirmed** in the dashboard.
+**How an order is confirmed:** the customer pays for the pieces in cash on delivery, but sends the **shipping fee** up front. At checkout, on their order page, and in the email they get the moment they order, they're told to send the fee to the number in **Settings → Shipping fee number** and to send the screenshot on WhatsApp. When the money arrives, you set the order to **Confirmed** in the dashboard.
 
 - Every change is saved to the order's timeline, which both the admin and the customer can see.
-- **A new order emails only the store.** The customer's first email is sent when you mark the order **Confirmed**, and it carries the full order details.
+- **A new order emails both of you.** The store gets the order details; the customer gets the shipping fee, the number to send it to, and the three steps. If there's no fee to collect (free shipping, or no number set), their email simply says the order is in and you'll confirm it.
+- Marking the order **Confirmed** emails the customer again with the full order details.
 - After that, the customer is emailed on every status change unless "Email the customer" is unticked.
 - **Cancelling** puts the items back in stock and gives back the promo-code use. A cancelled order can't be changed again.
 - Marking a Cash on Delivery order **Delivered** also marks it as paid.

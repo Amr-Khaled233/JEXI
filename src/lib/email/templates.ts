@@ -315,6 +315,43 @@ function noteBox(title: string, text: string) {
 </td></tr>`;
 }
 
+/**
+ * The shipping fee an order is waiting on, with the number to send it to.
+ * Deliberately loud: it is the one thing the customer has to act on.
+ */
+function payBox(opts: { amount: number; phone: string; wa: string | null; cashOnDelivery: number }) {
+  const { amount, phone, wa, cashOnDelivery } = opts;
+  const step = (n: number, html: string) =>
+    `<tr>
+      <td width="30" valign="top" style="padding:0 0 12px;">
+        <div style="width:22px;height:22px;border-radius:22px;background:${C.gold};color:#ffffff;font-family:${SANS};font-size:12px;line-height:22px;text-align:center;font-weight:bold;">${n}</div>
+      </td>
+      <td valign="top" style="padding:1px 0 12px;font-family:${SANS};font-size:14px;line-height:1.6;color:${C.body};">${html}</td>
+    </tr>`;
+
+  return `<tr><td class="px" style="padding:30px 44px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:2px solid ${C.gold};border-radius:8px;background:${C.soft};">
+    <tr><td style="padding:24px 24px 6px;font-family:${SANS};text-align:center;">
+      <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:${C.goldText};font-weight:bold;">To confirm your order</div>
+      <div style="margin-top:14px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:${C.muted};">Shipping fee to send</div>
+      <div style="margin-top:4px;font-family:${SERIF};font-size:34px;line-height:1.2;color:${C.ink};">${formatMoney(amount)}</div>
+      <div style="margin-top:14px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:${C.muted};">Send it to this number</div>
+      <div style="margin-top:4px;font-family:${SANS};font-size:26px;line-height:1.3;font-weight:bold;letter-spacing:1px;color:${C.ink};">${e(phone)}</div>
+    </td></tr>
+    <tr><td style="padding:16px 24px 6px;">
+      <div style="height:1px;background:${C.line};font-size:0;line-height:0;">&nbsp;</div>
+    </td></tr>
+    <tr><td style="padding:14px 24px 10px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        ${step(1, `Send <strong style="color:${C.ink};">${formatMoney(amount)}</strong> to <strong style="color:${C.ink};">${e(phone)}</strong>`)}
+        ${step(2, wa ? `Send us the screenshot on <a href="${wa}" style="color:${C.goldText};font-weight:bold;">WhatsApp</a> with your order number` : "Reply to this email with the screenshot and your order number")}
+        ${step(3, `We confirm your order and email you. The remaining <strong style="color:${C.ink};">${formatMoney(cashOnDelivery)}</strong> is paid in cash when it arrives.`)}
+      </table>
+    </td></tr>
+  </table>
+</td></tr>`;
+}
+
 function helpLine(brand: EmailBrand) {
   const wa = whatsappLink(brand.whatsapp);
   const text = wa
@@ -377,6 +414,64 @@ export function adminNewOrderEmail(order: EmailOrder, brand: EmailBrand) {
     subject,
     html: layout({ title: subject, preheader: `${order.customerName} ordered ${order.items.length} ${order.items.length === 1 ? "item" : "items"} in ${order.governorate}`, body, brand, footerNote: `Sent by your ${brand.storeName} store.` }),
     text: `New order ${order.orderNumber}\n\n${textItems(order)}\n\nDeliver to: ${order.customerName}, ${order.address}, ${order.area}, ${order.governorate}\nPhone: ${order.phone}\nEmail: ${order.email}${order.notes ? `\nNote: ${order.notes}` : ""}\n\nOpen in dashboard: ${appUrl(`/admin/orders/${order.id}`)}`,
+  };
+}
+
+/**
+ * Sent the moment an order is placed. Its job is to get the shipping fee sent,
+ * because nothing moves until it arrives. Without a fee to collect it simply
+ * says the order is in and we will confirm it.
+ */
+export function customerOrderPlacedEmail(order: EmailOrder, brand: EmailBrand, opts: { paymentPhone: string | null } = { paymentPhone: null }) {
+  const name = firstName(order.customerName);
+  const awaitingFee = order.shippingFee > 0 && !!opts.paymentPhone;
+  const subject = awaitingFee
+    ? `Send ${formatMoney(order.shippingFee)} shipping to confirm order ${order.orderNumber}`
+    : `We received your JEXI order ${order.orderNumber}`;
+  const wa = whatsappLink(brand.whatsapp ?? opts.paymentPhone);
+
+  const body =
+    intro(
+      "Order received",
+      `Thank you, ${name}`,
+      awaitingFee
+        ? `We have your order <strong style="color:${C.ink};">${e(order.orderNumber)}</strong>. To confirm it, send the shipping fee of <strong style="color:${C.ink};">${formatMoney(order.shippingFee)}</strong> to the number below and send us the screenshot. Your pieces are paid for in cash when they arrive.`
+        : `We have your order <strong style="color:${C.ink};">${e(order.orderNumber)}</strong>. We will confirm it shortly and email you as soon as we do.`,
+    ) +
+    tracker("PENDING") +
+    (awaitingFee ? payBox({ amount: order.shippingFee, phone: opts.paymentPhone!, wa, cashOnDelivery: order.total - order.shippingFee }) : "") +
+    metaStrip([
+      { label: "Order number", value: order.orderNumber },
+      { label: "Date", value: formatDate(order.createdAt) },
+      { label: "Total", value: formatMoney(order.total) },
+    ]) +
+    itemsBlock(order, "Your pieces") +
+    twoCards(
+      { title: "Delivery address", html: addressHtml(order) },
+      {
+        title: "Payment",
+        html: awaitingFee
+          ? `<strong style="color:${C.ink};">${formatMoney(order.shippingFee)}</strong> shipping now, to confirm.<br><strong style="color:${C.ink};">${formatMoney(order.total - order.shippingFee)}</strong> in cash when your order arrives.`
+          : `<strong style="color:${C.ink};">${paymentLabel(order)}</strong><br>Please have ${formatMoney(order.total)} ready when your order arrives.`,
+      },
+    ) +
+    button(orderLink(order), "View your order") +
+    helpLine(brand);
+
+  const textSteps = awaitingFee
+    ? `To confirm your order:\n1. Send ${formatMoney(order.shippingFee)} to ${opts.paymentPhone}\n2. Send us the screenshot with your order number\n3. We confirm your order and email you. The remaining ${formatMoney(order.total - order.shippingFee)} is paid in cash on delivery.\n\n`
+    : "We will confirm your order shortly and email you as soon as we do.\n\n";
+
+  return {
+    subject,
+    html: layout({
+      title: subject,
+      preheader: awaitingFee ? `Send ${formatMoney(order.shippingFee)} to ${opts.paymentPhone} so we can confirm order ${order.orderNumber}.` : `Order ${order.orderNumber} is with us and we will confirm it shortly.`,
+      body,
+      brand,
+      footerNote: `You are receiving this email because you placed an order with ${brand.storeName}.`,
+    }),
+    text: `Thank you, ${name}.\n\nWe have your order ${order.orderNumber}.\n\n${textSteps}${textItems(order)}\n\nDelivery address: ${order.address}, ${order.area}, ${order.governorate}\n\nView your order: ${orderLink(order)}${textFooter(brand)}`,
   };
 }
 
