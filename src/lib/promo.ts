@@ -1,6 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/money";
+import { normalizePhone } from "@/lib/utils";
 
 type DbClient = typeof db | Prisma.TransactionClient;
 
@@ -71,7 +72,9 @@ export async function evaluatePromo(
   }
 
   const email = customer?.email?.trim().toLowerCase();
-  const phone = customer?.phone?.trim();
+  // Orders store the normalised phone, so normalise here too, otherwise "0101 234 5678"
+  // would pass the per-customer check in the cart and then fail at checkout.
+  const phone = customer?.phone?.trim() ? normalizePhone(customer.phone) : undefined;
   if (promo.perCustomerLimit != null && (email || phone)) {
     const used = await client.order.count({
       where: {

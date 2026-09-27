@@ -1,12 +1,6 @@
 import { BadgeCheck, MessageCircle, Smartphone } from "lucide-react";
 import { formatMoney } from "@/lib/money";
-import { cn } from "@/lib/utils";
-
-function waLink(number: string) {
-  const digits = number.replace(/\D/g, "");
-  if (!digits) return null;
-  return `https://wa.me/${digits.startsWith("0") ? `2${digits}` : digits}`;
-}
+import { cn, whatsappUrl } from "@/lib/utils";
 
 /**
  * The headline rule, shown at the top of checkout so it is read before the form:
@@ -72,7 +66,7 @@ export function PaymentInstructions({
   className?: string;
 }) {
   if (shippingFee <= 0 || !paymentPhone) return null;
-  const wa = waLink(whatsapp || paymentPhone);
+  const wa = whatsappUrl(whatsapp || paymentPhone);
 
   return (
     <div className={cn("rounded-[3px] border border-gold/40 bg-gold/5 p-4", className)}>

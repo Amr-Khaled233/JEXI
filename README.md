@@ -182,6 +182,10 @@ The sample product images come from `scripts/generate-samples.mjs`. Replace them
 | `npm run dev` | Start the development server |
 | `npm run build` / `npm start` | Build for production, then run the production server |
 | `npm run typecheck` | Check the TypeScript types |
+| `npm test` | Run the unit tests (no database needed) |
+| `npm run test:db` | Run the tests that need Postgres (see section 8) |
+| `npm run test:all` | Run both suites |
+| `npm run test:watch` | Re-run tests as you edit |
 | `npm run db:migrate` | Create or apply migrations after editing `prisma/schema.prisma` (development) |
 | `npm run db:deploy` | Apply migrations in production |
 | `npm run db:seed` | Load the starter data |
@@ -214,6 +218,9 @@ The sample product images come from `scripts/generate-samples.mjs`. Replace them
 ## 7. Project structure
 
 ```
+tests/
+  unit/                  pure logic: money, phones, shipping rules, email copy
+  db/                    the real engine against Postgres: pricing, orders, stock
 prisma/
   schema.prisma          data models (Product, Variant, Category, GiftBox, PromoCode, Order, …)
   seed.ts                starter data
@@ -232,3 +239,28 @@ src/
     auth.ts session.ts   admin and customer sessions
   proxy.ts               redirects signed-out visitors away from /admin
 ```
+
+## 8. Tests
+
+```bash
+npm test          # unit tests, no database, about a second
+npm run test:db   # the pricing and order engine against a real Postgres
+npm run test:all  # both
+```
+
+**Unit tests** (`tests/unit/`) cover the rules that decide money and wording: piastre
+conversion and formatting, Egyptian phone normalisation, WhatsApp links, slugs,
+shipping and free-shipping rules, promo-code status and discount maths, and the
+text of every customer email.
+
+**Database tests** (`tests/db/`) run the real `quoteCart`, `placeOrder`,
+`updateOrderStatus` and `deleteOrder` against Postgres, including the cases that
+only appear under load: two orders racing for the last piece in stock, two orders
+racing for the last use of a promo code, and a gift box drawing on the same
+variant as a separate line in the same cart.
+
+They never touch your development database. The suite derives a separate
+database from `DATABASE_URL` by appending `_test` to its name, drops it, recreates
+it and applies the migrations before each run. So with
+`postgresql://jexi:jexi@localhost:5442/jexi`, the tests use `jexi_test`. Start
+Postgres first with `docker compose up -d`.

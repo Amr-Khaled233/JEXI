@@ -4,7 +4,7 @@
 
 import { ORDER_FLOW, type OrderStatusKey } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
-import { appUrl, escapeHtml as e, formatDate } from "@/lib/utils";
+import { appUrl, escapeHtml as e, formatDate, whatsappUrl } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────
 
@@ -84,13 +84,6 @@ function firstName(name: string) {
   return name.trim().split(/\s+/)[0] ?? name;
 }
 
-function whatsappLink(number: string | null) {
-  if (!number) return null;
-  const digits = number.replace(/\D/g, "");
-  if (!digits) return null;
-  return `https://wa.me/${digits.startsWith("0") ? `2${digits}` : digits}`;
-}
-
 function orderLink(order: EmailOrder) {
   return appUrl(`/order/${encodeURIComponent(order.orderNumber)}?t=${order.accessToken}`);
 }
@@ -103,7 +96,7 @@ function colorLabel(color: string | null | undefined) {
 
 function layout(opts: { title: string; preheader: string; body: string; brand: EmailBrand; footerNote: string }) {
   const { title, preheader, body, brand, footerNote } = opts;
-  const wa = whatsappLink(brand.whatsapp);
+  const wa = whatsappUrl(brand.whatsapp);
   const links = [
     `<a href="${appUrl("/shop")}" style="color:${C.goldText};text-decoration:none;white-space:nowrap;">Shop</a>`,
     `<a href="${appUrl("/track")}" style="color:${C.goldText};text-decoration:none;white-space:nowrap;">Track an order</a>`,
@@ -353,7 +346,7 @@ function payBox(opts: { amount: number; phone: string; wa: string | null; cashOn
 }
 
 function helpLine(brand: EmailBrand) {
-  const wa = whatsappLink(brand.whatsapp);
+  const wa = whatsappUrl(brand.whatsapp);
   const text = wa
     ? `Questions about your order? Reply to this email or <a href="${wa}" style="color:${C.goldText};">message us on WhatsApp</a>.`
     : "Questions about your order? Just reply to this email and we will be happy to help.";
@@ -385,7 +378,7 @@ const paymentLabel = (order: EmailOrder) => (order.paymentMethod === "COD" ? "Ca
 
 export function adminNewOrderEmail(order: EmailOrder, brand: EmailBrand) {
   const subject = `New order ${order.orderNumber} for ${formatMoney(order.total)}`;
-  const wa = whatsappLink(order.phone);
+  const wa = whatsappUrl(order.phone);
   const body =
     intro(
       "New order",
@@ -428,7 +421,7 @@ export function customerOrderPlacedEmail(order: EmailOrder, brand: EmailBrand, o
   const subject = awaitingFee
     ? `Send ${formatMoney(order.shippingFee)} shipping to confirm order ${order.orderNumber}`
     : `We received your JEXI order ${order.orderNumber}`;
-  const wa = whatsappLink(brand.whatsapp ?? opts.paymentPhone);
+  const wa = whatsappUrl(brand.whatsapp ?? opts.paymentPhone);
 
   const body =
     intro(

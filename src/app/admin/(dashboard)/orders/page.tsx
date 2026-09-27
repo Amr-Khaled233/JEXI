@@ -5,7 +5,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { OrdersTable } from "@/components/admin/orders-table";
 import { OrdersToolbar } from "@/components/admin/orders-toolbar";
 import { EmptyState, PageTitle } from "@/components/admin/ui";
-import { ORDER_STATUS_KEYS, type OrderStatusKey } from "@/lib/constants";
+import { OPEN_ORDER_STATUSES, ORDER_STATUS_KEYS, type OrderStatusKey } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/money";
 
@@ -43,7 +43,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     }),
     db.order.count({ where }),
     db.order.count(),
-    db.order.count({ where: { status: { in: ["PENDING", "SHIPPED"] } } }),
+    db.order.count({ where: { status: { in: OPEN_ORDER_STATUSES } } }),
     db.order.aggregate({ where: { status: { not: "CANCELLED" } }, _sum: { total: true }, _count: true }),
   ]);
   const pages = Math.max(1, Math.ceil(total / PER_PAGE));
@@ -52,7 +52,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
   const stats = [
     { label: "Total orders", value: all.toLocaleString("en-US"), hint: "All time" },
-    { label: "Active orders", value: active.toLocaleString("en-US"), hint: "Pending or shipped" },
+    { label: "Active orders", value: active.toLocaleString("en-US"), hint: "Not yet delivered" },
     { label: "Revenue", value: formatMoney(revenueTotal), hint: "Excluding cancelled" },
     { label: "Average order", value: formatMoney(average), hint: "Excluding cancelled" },
   ];

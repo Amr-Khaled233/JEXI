@@ -2,15 +2,16 @@ import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { FacebookIcon, InstagramIcon, socialUrl, TikTokIcon, WhatsAppIcon } from "@/components/social-icons";
 import type { Settings } from "@/lib/settings";
+import { whatsappUrl } from "@/lib/utils";
 import { freeShippingMessage } from "@/lib/shipping";
 
 export function Footer({ categories, settings }: { categories: { id: string; name: string; slug: string }[]; settings: Settings }) {
-  const whatsapp = settings.whatsapp?.replace(/[^\d]/g, "");
+  const whatsapp = whatsappUrl(settings.whatsapp);
   const socials = [
     settings.showInstagram && settings.instagram && { label: "Instagram", href: socialUrl("instagram", settings.instagram), Icon: InstagramIcon },
     settings.showFacebook && settings.facebook && { label: "Facebook", href: socialUrl("facebook", settings.facebook), Icon: FacebookIcon },
     settings.showTiktok && settings.tiktok && { label: "TikTok", href: socialUrl("tiktok", settings.tiktok), Icon: TikTokIcon },
-    whatsapp && { label: "WhatsApp", href: `https://wa.me/${whatsapp.startsWith("0") ? `2${whatsapp}` : whatsapp}`, Icon: WhatsAppIcon },
+    whatsapp && { label: "WhatsApp", href: whatsapp, Icon: WhatsAppIcon },
   ].filter(Boolean) as { label: string; href: string; Icon: (p: { className?: string }) => React.ReactNode }[];
   const shippingLine = freeShippingMessage(settings);
 

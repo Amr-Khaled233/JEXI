@@ -26,6 +26,17 @@ export function isValidEgyptianMobile(input: string): boolean {
   return /^01[0125]\d{8}$/.test(normalizePhone(input));
 }
 
+/**
+ * wa.me link for an Egyptian number, or null when there are no digits to dial.
+ * A leading 0 is kept, not dropped: 01012345678 becomes 201012345678, where that
+ * 0 is already the second digit of Egypt's +20.
+ */
+export function whatsappUrl(number: string | null | undefined): string | null {
+  const digits = (number ?? "").replace(/\D/g, "");
+  if (!digits) return null;
+  return `https://wa.me/${digits.startsWith("0") ? `2${digits}` : digits}`;
+}
+
 export function formatDate(date: Date | string, withTime = false): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleString("en-GB", {

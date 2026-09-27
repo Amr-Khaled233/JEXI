@@ -11,7 +11,7 @@ import { DeleteOrderButton } from "@/components/admin/delete-order-button";
 import { OrderStatusBadge, Table } from "@/components/admin/ui";
 import { buttonClasses } from "@/components/ui/button";
 import { Select } from "@/components/ui/field";
-import { ORDER_STATUS_KEYS, ORDER_STATUSES, type OrderStatusKey } from "@/lib/constants";
+import { ORDER_STATUS_KEYS, ORDER_STATUSES, reservesStock, type OrderStatusKey } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 
@@ -34,8 +34,6 @@ export type OrderRow = {
   promoCode: string | null;
   items: { id: string; name: string; colorName: string | null; image: string | null; quantity: number; unitPrice: number; lineTotal: number }[];
 };
-
-const isOpen = (s: OrderStatusKey) => s === "PENDING" || s === "SHIPPED";
 
 export function OrdersTable({ orders }: { orders: OrderRow[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -87,7 +85,7 @@ export function OrdersTable({ orders }: { orders: OrderRow[] }) {
                   <Link href={`/admin/orders/${o.id}`} aria-label={`Edit order ${o.orderNumber}`} title="Edit order" className={buttonClasses("ghost", "sm", "px-2.5")}>
                     <Pencil className="size-3.5" />
                   </Link>
-                  <DeleteOrderButton orderId={o.id} orderNumber={o.orderNumber} open={isOpen(o.status)} compact />
+                  <DeleteOrderButton orderId={o.id} orderNumber={o.orderNumber} open={reservesStock(o.status)} compact />
                 </div>
               </td>
             </tr>

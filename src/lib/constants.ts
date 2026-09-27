@@ -39,6 +39,17 @@ export const ORDER_STATUS_KEYS = Object.keys(ORDER_STATUSES) as OrderStatusKey[]
 /** The happy-path progression shown on the tracking line. */
 export const ORDER_FLOW: OrderStatusKey[] = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"];
 
+/**
+ * An order still holding its stock: placed, not yet delivered, not cancelled.
+ * Deleting one has to put the items back, and these are the orders that still
+ * need attention in the dashboard. Delivered stock has left, and cancelling
+ * already returned it, so neither counts.
+ */
+export function reservesStock(status: OrderStatusKey) {
+  return status === "PENDING" || status === "CONFIRMED" || status === "SHIPPED";
+}
+export const OPEN_ORDER_STATUSES = ORDER_STATUS_KEYS.filter(reservesStock);
+
 /** All 27 Egyptian governorates with a sensible default delivery estimate. */
 export const GOVERNORATES: { name: string; eta: string }[] = [
   { name: "Cairo", eta: "1 to 3 business days" },

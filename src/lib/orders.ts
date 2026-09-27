@@ -1,6 +1,7 @@
 import { randomBytes, randomInt } from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
 import type { OrderStatus } from "@/generated/prisma/enums";
+import { reservesStock } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { quoteCart, type CartItemInput } from "@/lib/pricing";
 
@@ -178,15 +179,15 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus, no
 }
 
 /**
- * Permanently delete an order. If it was still open (Pending or Shipped), its items
- * go back into stock and its promo-code use is released first. Delivered and
+ * Permanently delete an order. If it was still holding stock, the items go back
+ * into inventory and its promo-code use is released first. Delivered and
  * cancelled orders are simply removed.
  */
 export async function deleteOrder(orderId: string) {
   return db.$transaction(async (tx) => {
     const order = await tx.order.findUnique({ where: { id: orderId }, include: { items: true } });
     if (!order) throw new OrderError("Order not found.");
-    if (order.status === "PENDING" || order.status === "SHIPPED") await releaseOrder(tx, order);
+    if (reservesStock(order.status)) await releaseOrder(tx, order);
     await tx.order.delete({ where: { id: orderId } });
     return order;
   });

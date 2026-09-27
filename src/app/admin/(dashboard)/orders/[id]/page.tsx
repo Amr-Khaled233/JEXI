@@ -8,9 +8,10 @@ import { OrderStatusBadge, Panel } from "@/components/admin/ui";
 import { OrderAddress, OrderItems, OrderSummaryTotals } from "@/components/order-details";
 import { OrderTimeline } from "@/components/order-timeline";
 import { Alert } from "@/components/ui/field";
+import { reservesStock } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/money";
-import { formatDate } from "@/lib/utils";
+import { formatDate, whatsappUrl } from "@/lib/utils";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -27,7 +28,7 @@ export default async function AdminOrderPage({ params }: Props) {
   if (!order) notFound();
 
   const previousOrders = await db.order.count({ where: { email: order.email, id: { not: order.id } } });
-  const whatsapp = order.phone.replace(/^0/, "20");
+  const whatsapp = whatsappUrl(order.phone);
 
   return (
     <>
@@ -41,7 +42,7 @@ export default async function AdminOrderPage({ params }: Props) {
         </div>
         <div className="flex items-center gap-3">
           <OrderStatusBadge status={order.status} />
-          <DeleteOrderButton orderId={order.id} orderNumber={order.orderNumber} open={order.status === "PENDING" || order.status === "SHIPPED"} redirectToList />
+          <DeleteOrderButton orderId={order.id} orderNumber={order.orderNumber} open={reservesStock(order.status)} redirectToList />
         </div>
       </div>
 
@@ -76,7 +77,7 @@ export default async function AdminOrderPage({ params }: Props) {
               <a href={`tel:${order.phone}`} className="text-gold hover:underline">
                 Call
               </a>
-              <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noopener noreferrer" className="text-gold hover:underline">
+              <a href={whatsapp ?? "#"} target="_blank" rel="noopener noreferrer" className="text-gold hover:underline">
                 WhatsApp
               </a>
               <a href={`mailto:${order.email}`} className="text-gold hover:underline">
